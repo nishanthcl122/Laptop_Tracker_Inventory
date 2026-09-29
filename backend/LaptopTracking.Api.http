@@ -1,0 +1,17 @@
+@HostAddress = http://localhost:5008
+
+### Get Dashboard Summary
+GET {{HostAddress}}/api/dashboard/summary
+Accept: application/json
+
+### Get Dashboard Charts
+GET {{HostAddress}}/api/dashboard/charts
+Accept: application/json
+
+### Get Laptops
+GET {{HostAddress}}/api/laptops?page=1&pageSize=25
+Accept: application/json
+
+### Get Current RAS Roster
+GET {{HostAddress}}/api/ras/current?page=1&pageSize=25
+Accept: application/json
