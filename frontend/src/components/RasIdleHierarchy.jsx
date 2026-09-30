@@ -54,10 +54,10 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
               e.stopPropagation();
               onOpenModal({});
             }}
-            className="total-assets-value hover:underline cursor-pointer"
+            className="total-assets-value hover:cursor-pointer"
             title="View all unallocated RAS resource"
           >
-            {total.toLocaleString()}
+            <span className='font-medium'>{total.toLocaleString()}</span>
           </button>
           <span className="collapse-indicator">
             <ChevronDown
@@ -85,7 +85,54 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
 
               {/* Grid: Row 1 = Offshore, Onsite; Row 2 = Nearshore, (Unknown if any) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {/* 1. Offshore Card (includes nested Billable / Unbillable counts) */}
+                
+                {/* 1. Onsite Card */}
+                <button
+                  type="button"
+                  onClick={() => onOpenModal({ wbsType: 'Onsite' })}
+                  className="flex flex-col justify-between p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-sky-50/30 hover:border-sky-300 transition-all text-left shadow-2xs group cursor-pointer"
+                  title="Filter by Onsite staff"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#0284c7' }} />
+                    <span className="text-[12px] font-semibold text-slate-700 group-hover:text-sky-900 transition-colors">
+                      Onsite
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between">
+                    <span className="text-lg font-bold tracking-tight text-slate-900 group-hover:text-sky-950 font-mono">
+                      {onsiteCount.toLocaleString()}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      Client site staff
+                    </span>
+                  </div>
+                </button>
+
+                {/* 2. Nearshore Card */}
+                <button
+                  type="button"
+                  onClick={() => onOpenModal({ wbsType: 'Nearshore' })}
+                  className="flex flex-col justify-between p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-emerald-50/30 hover:border-emerald-300 transition-all text-left shadow-2xs group cursor-pointer"
+                  title="Filter by Nearshore staff"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#10b981' }} />
+                    <span className="text-[12px] font-semibold text-slate-700 group-hover:text-emerald-900 transition-colors">
+                      Nearshore
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between">
+                    <span className="text-lg font-bold tracking-tight text-slate-900 group-hover:text-emerald-950 font-mono">
+                      {nearshoreCount.toLocaleString()}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      Nearshore staff
+                    </span>
+                  </div>
+                </button>
+
+                {/* 3. Offshore Card (includes nested Billable / Unbillable counts) */}
                 <div className="flex flex-col justify-between p-2.5 rounded-xl border border-slate-200/80 bg-white shadow-2xs">
                   <div
                     onClick={() => onOpenModal({ wbsType: 'Offshore' })}
@@ -134,52 +181,6 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                     </button>
                   </div>
                 </div>
-
-                {/* 2. Onsite Card */}
-                <button
-                  type="button"
-                  onClick={() => onOpenModal({ wbsType: 'Onsite' })}
-                  className="flex flex-col justify-between p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-sky-50/30 hover:border-sky-300 transition-all text-left shadow-2xs group cursor-pointer"
-                  title="Filter by Onsite staff"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#0284c7' }} />
-                    <span className="text-[12px] font-semibold text-slate-700 group-hover:text-sky-900 transition-colors">
-                      Onsite
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-baseline justify-between">
-                    <span className="text-lg font-bold tracking-tight text-slate-900 group-hover:text-sky-950 font-mono">
-                      {onsiteCount.toLocaleString()}
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      Client site staff
-                    </span>
-                  </div>
-                </button>
-
-                {/* 3. Nearshore Card */}
-                <button
-                  type="button"
-                  onClick={() => onOpenModal({ wbsType: 'Nearshore' })}
-                  className="flex flex-col justify-between p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-emerald-50/30 hover:border-emerald-300 transition-all text-left shadow-2xs group cursor-pointer"
-                  title="Filter by Nearshore staff"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#10b981' }} />
-                    <span className="text-[12px] font-semibold text-slate-700 group-hover:text-emerald-900 transition-colors">
-                      Nearshore
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-baseline justify-between">
-                    <span className="text-lg font-bold tracking-tight text-slate-900 group-hover:text-emerald-950 font-mono">
-                      {nearshoreCount.toLocaleString()}
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-medium">
-                      Nearshore staff
-                    </span>
-                  </div>
-                </button>
 
                 {/* 4. Optional Unknown Card (only if unknownCount > 0) */}
                 {unknownCount > 0 && (
