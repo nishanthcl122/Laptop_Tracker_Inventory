@@ -138,11 +138,11 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
       {/* Page Header */}
       <div>
         <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-          Excel Reconciliation Hub
+          Excel Upload
         </h1>
-        <p className="text-xs text-slate-500">
+        {/* <p className="text-xs text-slate-500">
           Upload daily Excel spreadsheets to compare with current inventory, detect changes, and reconcile workforce status safely.
-        </p>
+        </p> */}
       </div>
 
       {/* Mode Switcher Tabs */}
@@ -157,7 +157,7 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
           }`}
         >
           <Laptop className="w-4 h-4" />
-          <span>Laptop Details Excel (Hardware Assets)</span>
+          <span>Laptop Details File Upload</span>
         </button>
 
         <button
@@ -170,7 +170,7 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>RAS Details Excel (Workforce Presence & LWD)</span>
+          <span>RAS File Upload</span>
         </button>
       </div>
 
@@ -275,7 +275,7 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                   <span className="text-[11px] text-slate-400">
-                    Staged into temporary holding first. Active laptop inventory is NOT altered until confirmed.
+                    Staged into temporary holding first. Please confirm to make changes in current table.
                   </span>
                   <button
                     type="submit"
@@ -506,15 +506,15 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
           {/* Upload Form */}
           {(!rasResult || !rasResult.success) && (
             <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-3">
-              <div className="bg-blue-50/70 border border-blue-100 p-3 rounded-lg text-xs text-blue-800">
+              {/* <div className="bg-blue-50/70 border border-blue-100 p-3 rounded-lg text-xs text-blue-800">
                 <strong>Dynamic Roster Ingestion:</strong> All Excel columns in your uploaded RAS file will be 100% captured and queryable. Key fields like <em>SAP ID</em>, <em>Employee Name</em>, <em>Location</em>, and <em>Last Working Day</em> are mapped to automatically reconcile laptop allocations.
-              </div>
+              </div> */}
 
               <form onSubmit={handleRasUpload} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Select RAS Workforce File (.xlsx, .xls, .csv)
+                      Select Latest RAS File (.xlsx, .xls, .csv)
                     </label>
                     <input
                       type="file"
@@ -556,9 +556,7 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <span className="text-[11px] text-slate-400">
-                    Allocated laptops with employees who exited or are absent from this file will be flagged to transition to In Stock.
-                  </span>
+                  {/*  */}
                   <button
                     type="submit"
                     disabled={!rasFile || !isValidSpreadsheetFile(rasFile) || rasLoading}

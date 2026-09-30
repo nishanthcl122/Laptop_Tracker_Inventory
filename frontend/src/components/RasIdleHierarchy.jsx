@@ -42,8 +42,8 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
             <UserMinus className="w-5 h-5" />
           </div>
           <div>
-            <p className="eyebrow">RAS Idle</p>
-            <p className="muted">Active RAS staff without an allocated laptop</p>
+            <p className="eyebrow">Resource without Laptop</p>
+            {/* <p className="muted">Active RAS staff without an allocated laptop</p> */}
           </div>
         </div>
 
@@ -55,7 +55,7 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
               onOpenModal({});
             }}
             className="total-assets-value hover:underline cursor-pointer"
-            title="View all unallocated RAS staff"
+            title="View all unallocated RAS resource"
           >
             {total.toLocaleString()}
           </button>
@@ -72,14 +72,14 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
         <div className="space-y-2.5 transition-all duration-200 ease-out">
           {total === 0 ? (
             <div className="p-4 rounded-xl border border-slate-200/80 bg-white text-center text-xs text-slate-400">
-              No idle RAS employees found.
+              No resource without laptop found.
             </div>
           ) : (
             <>
               {/* Section Sub-heading */}
               <div className="px-0.5 pt-0.5">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  RAS Idle Breakdown
+                  Breakdown:
                 </span>
               </div>
 

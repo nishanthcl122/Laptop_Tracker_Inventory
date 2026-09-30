@@ -35,11 +35,11 @@ export default function KpiCards({
         <div className="panel-header">
           <div className="section-badge">
             <span className="dot" />
-            <span>Laptop fleet</span>
+            <span>Laptop Details:</span>
           </div>
-          <span className="panel-meta">
+          {/* <span className="panel-meta">
             Total {totalCount.toLocaleString()} = Allocated {allocatedCount.toLocaleString()} + In Stock {inStockCount.toLocaleString()}
-          </span>
+          </span> */}
         </div>
 
         <div
@@ -53,7 +53,7 @@ export default function KpiCards({
             </div>
             <div>
               <p className="eyebrow">Total laptops</p>
-              <p className="muted">Complete fleet in registry</p>
+              {/* <p className="muted">Complete breakdown</p> */}
             </div>
           </div>
 
@@ -79,7 +79,7 @@ export default function KpiCards({
                   </span>
                   <div>
                     <p className="allocation-label">Allocated</p>
-                    <p className="allocation-meta">Active + Lost + Not in UHG</p>
+                    {/* <p className="allocation-meta">Active + Lost + Not in UHG</p> */}
                   </div>
                 </div>
 
@@ -96,13 +96,13 @@ export default function KpiCards({
                     className="mini-stat success"
                     onClick={() => onOpenResultsModal({
                       title: 'RAS Active Laptops',
-                      subtitle: 'Allocated laptops whose assigned staff is present in latest RAS roster',
+                      subtitle: 'Allocated laptops whose assigned rsource is present in latest RAS dump',
                       filters: { status: 'Allocated', rasStatus: 'ACTIVE', isLost: false }
                     })}
                   >
                     <span className="mini-stat-label"><span className="dot green" />Active</span>
                     <strong>{rasActiveCount.toLocaleString()}</strong>
-                    <small>In RAS</small>
+                    {/* <small>According to RAS Data</small> */}
                   </button>
 
                   <button
@@ -110,13 +110,13 @@ export default function KpiCards({
                     className="mini-stat danger"
                     onClick={() => onOpenResultsModal({
                       title: 'Lost Laptops',
-                      subtitle: 'Laptops whose assigned staff was missing during initial RAS baseline',
+                      subtitle: '',
                       filters: { status: 'Allocated', rasStatus: 'LOST', isLost: true }
                     })}
                   >
                     <span className="mini-stat-label"><span className="dot red" />Lost</span>
                     <strong>{lostCount.toLocaleString()}</strong>
-                    <small>Baseline</small>
+                    {/* <small></small> */}
                   </button>
 
                   <button
@@ -124,13 +124,13 @@ export default function KpiCards({
                     className="mini-stat warning"
                     onClick={() => onOpenResultsModal({
                       title: 'Not in UHG Laptops',
-                      subtitle: 'Allocated laptops whose assigned staff exited from subsequent RAS roster',
+                      subtitle: 'Allocated laptops whose assigned resource datails missing in latest RAS dump',
                       filters: { status: 'Allocated', rasStatus: 'NOT_IN_UHG', isLost: false }
                     })}
                   >
                     <span className="mini-stat-label"><span className="dot amber" />Not in UHG</span>
                     <strong>{notInUhgCount.toLocaleString()}</strong>
-                    <small>Exited</small>
+                    {/* <small>Exited</small> */}
                   </button>
                 </div>
               )}
@@ -148,7 +148,7 @@ export default function KpiCards({
                   </span>
                   <div>
                     <p className="allocation-label">In stock</p>
-                    <p className="allocation-meta">Available inventory</p>
+                    {/* <p className="allocation-meta">Available inventory</p> */}
                   </div>
                 </div>
 
@@ -208,9 +208,9 @@ export default function KpiCards({
         <div className="panel-header">
           <div className="section-badge muted-badge">
             <span className="dot dark" />
-            <span>RAS signals</span>
+            <span>Numbers from RAS</span>
           </div>
-          <span className="panel-meta">Roster analysis</span>
+          {/* <span className="panel-meta"></span> */}
         </div>
 
         <RasIdleHierarchy

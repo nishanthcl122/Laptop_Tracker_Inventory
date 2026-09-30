@@ -68,11 +68,11 @@ export default function LaptopDetailsPage() {
       <div className="flex flex-wrap items-center justify-between pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-            Laptop Operational Registry
+            Laptop Details:
           </h1>
-          <p className="text-xs text-slate-500">
+          {/* <p className="text-xs text-slate-500">
             Full inventory dataset, employee assignments, RAS tracking, and stock duration.
-          </p>
+          </p> */}
         </div>
         <div className="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-md font-mono text-xs font-semibold">
           Total Current Laptops: {totalCount.toLocaleString()}

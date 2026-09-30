@@ -63,9 +63,9 @@ export default function BatchMasterPage() {
               <h1 className="text-lg font-bold text-slate-900 tracking-tight">
                 Batch Master Log
               </h1>
-              <p className="text-xs text-slate-500">
+              {/* <p className="text-xs text-slate-500">
                 Audit trail of daily Excel imports (Hardware Assets & RAS Workforce presence).
-              </p>
+              </p> */}
             </div>
           </div>
         </div>

@@ -19,8 +19,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
           </div>
           <div className="brand-copy">
             <span className="brand-name">LaptopTracker</span>
-            <span className="brand-divider">|</span>
-            <span className="brand-subtitle">Daily Excel Reconciliation & Inventory Monitoring</span>
+            {/* <span className="brand-divider">|</span> */}
+            {/* <span className="brand-subtitle">Daily Excel Reconciliation & Inventory Monitoring</span> */}
           </div>
         </div>
 
