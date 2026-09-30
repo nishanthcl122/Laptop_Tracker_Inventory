@@ -60,7 +60,7 @@ export default function DashboardPage() {
     if (!bucketName) {
       openResultsModal({
         title: 'LWD ≤ 15 Days Exit Risk',
-        subtitle: 'Allocated laptops whose assigned staff has Last Working Day within the next 15 days',
+        subtitle: 'Allocated laptops whose assigned resource has Last Working Day within the next 15 days',
         filters: { status: 'Allocated', lwdApproaching15Days: true }
       });
       return;
