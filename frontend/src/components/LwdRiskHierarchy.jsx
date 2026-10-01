@@ -50,7 +50,7 @@ export default function LwdRiskHierarchy({ totalCount = 0, breakdown = [], onOpe
           </div>
           <div>
             <p className="eyebrow">LWD &lt; 15 Days</p>
-            <p className="muted">Allocated assets with employee exit in &le; 15 days</p>
+            {/* <p className="muted">Allocated assets with employee exit in &le; 15 days</p> */}
           </div>
         </div>
 

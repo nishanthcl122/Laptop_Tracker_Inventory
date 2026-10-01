@@ -295,8 +295,8 @@ export default function RasDataPage({ onNavigateImport }) {
               <Users className="w-5 h-5" />
             </span>
             <div>
-              <h1 className="text-lg font-bold text-slate-900 tracking-tight">RAS Workforce Master</h1>
-              <p className="text-xs text-slate-500">Authoritative employee roster and Last Working Day (LWD) from latest accepted RAS file.</p>
+              <h1 className="text-lg font-bold text-slate-900 tracking-tight">RAS Data</h1>
+              {/* <p className="text-xs text-slate-500">Authoritative employee roster and Last Working Day (LWD) from latest accepted RAS file.</p> */}
             </div>
           </div>
         </div>
@@ -361,7 +361,7 @@ export default function RasDataPage({ onNavigateImport }) {
               {totalCount.toLocaleString()} employees
             </span>
           </div>
-          <span className="text-[11px] text-slate-400">Click any row to view complete structured record details</span>
+          {/* <span className="text-[11px] text-slate-400">Click any row to view complete structured record details</span> */}
         </div>
 
         {/* Progress Bar */}

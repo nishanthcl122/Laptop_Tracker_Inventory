@@ -206,7 +206,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 </span>
               </div>
               <p className="text-xs text-purple-200/70 mt-0.5">
-                Employees in current RAS roster with no active allocated laptop
+                Employees in current RAS dump with no active allocated laptop
               </p>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 <tr>
                   <td colSpan="7" className="py-12 text-center text-slate-400">
                     <UserMinus className="w-8 h-8 mx-auto mb-2 text-slate-300 stroke-1" />
-                    No RAS idle employees found matching criteria.
+                    No resource without laptop found matching criteria.
                   </td>
                 </tr>
               ) : (
