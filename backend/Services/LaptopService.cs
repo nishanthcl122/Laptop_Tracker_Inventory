@@ -18,8 +18,7 @@ public class LaptopService
     {
         _db = db;
     }
-
-    public async Task<PagedResult<LaptopDto>> GetLaptopsAsync(LaptopQueryParameters query)
+    public async Task<PagedResult<LaptopDto>> GetLaptopsAsync(LaptopQueryParameters query, CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
         var q = _db.LaptopCurrents.AsNoTracking().AsQueryable();
@@ -234,7 +233,7 @@ public class LaptopService
             q = q.Where(l => l.LastSeenDate == query.SnapshotDate.Value);
         }
 
-        int totalCount = await q.CountAsync();
+        int totalCount = await q.CountAsync(cancellationToken);
 
         // Sorting
         bool desc = string.Equals(query.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
@@ -254,7 +253,7 @@ public class LaptopService
         int page = Math.Max(1, query.Page);
         int pageSize = Math.Clamp(query.PageSize, 1, 500);
 
-        var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var items = await q.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
 
         // Retrieve representative RAS data for the page (FIRST OCCURRENCE start/end date)
         var saps = items.Where(l => !string.IsNullOrEmpty(l.SAPId)).Select(l => l.SAPId!).Distinct().ToList();
@@ -262,7 +261,7 @@ public class LaptopService
             .AsNoTracking()
             .Where(r => saps.Contains(r.EmployeeCode))
             .OrderBy(r => r.RasRecordId) // FIRST OCCURRENCE
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var rasFirstBySap = rasRows
             .GroupBy(r => r.EmployeeCode, StringComparer.OrdinalIgnoreCase)
@@ -284,11 +283,11 @@ public class LaptopService
         };
     }
 
-    public async Task<LaptopDto?> GetLaptopBySerialAsync(string serialNumber)
+    public async Task<LaptopDto?> GetLaptopBySerialAsync(string serialNumber, CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
         var lap = await _db.LaptopCurrents.AsNoTracking()
-            .FirstOrDefaultAsync(l => l.SerialNumber == serialNumber);
+            .FirstOrDefaultAsync(l => l.SerialNumber == serialNumber, cancellationToken);
 
         if (lap == null) return null;
 
@@ -301,7 +300,7 @@ public class LaptopService
                 .AsNoTracking()
                 .Where(r => r.EmployeeCode == lap.SAPId)
                 .OrderBy(r => r.RasRecordId) // FIRST OCCURRENCE
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             if (rasRows.Count > 0)
             {
@@ -317,7 +316,7 @@ public class LaptopService
         return MapToDto(lap, today, rasFirstBySap, rasLwdBySap);
     }
 
-    public async Task<List<AuditHistoryItemDto>> GetLaptopAuditHistoryAsync(string serialNumber)
+    public async Task<List<AuditHistoryItemDto>> GetLaptopAuditHistoryAsync(string serialNumber, CancellationToken cancellationToken)
     {
         return await _db.LaptopAuditHistories
             .AsNoTracking()
@@ -353,10 +352,10 @@ public class LaptopService
                 CurrentRasSnapshotDate = a.CurrentRasSnapshotDate,
                 RecordedAt = a.RecordedAt
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<UpdateLaptopResultDto> UpdateLaptopStatusAsync(string serialNumber, UpdateLaptopRequestDto request)
+    public async Task<UpdateLaptopResultDto> UpdateLaptopStatusAsync(string serialNumber, UpdateLaptopRequestDto request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Status))
         {
@@ -371,7 +370,7 @@ public class LaptopService
         }
 
         var laptop = await _db.LaptopCurrents
-            .FirstOrDefaultAsync(l => l.SerialNumber == serialNumber);
+            .FirstOrDefaultAsync(l => l.SerialNumber == serialNumber, cancellationToken);
 
         if (laptop == null)
         {
@@ -411,7 +410,7 @@ public class LaptopService
             }
         }
 
-        using var transaction = await _db.Database.BeginTransactionAsync();
+        using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var auditEntry = new LaptopAuditHistory
@@ -433,7 +432,7 @@ public class LaptopService
                 RecordedAt = now
             };
 
-            await _db.LaptopAuditHistories.AddAsync(auditEntry);
+            await _db.LaptopAuditHistories.AddAsync(auditEntry, cancellationToken);
 
             laptop.FBRRequest = string.IsNullOrWhiteSpace(request.FBRRequest) ? laptop.FBRRequest : request.FBRRequest.Trim();
             laptop.Location = request.Location!.Trim();
@@ -459,10 +458,10 @@ public class LaptopService
             laptop.LastSeenDate = today;
             laptop.UpdatedAt = now;
 
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
-            var updatedLaptop = await GetLaptopBySerialAsync(serialNumber);
+            var updatedLaptop = await GetLaptopBySerialAsync(serialNumber, cancellationToken);
             return new UpdateLaptopResultDto
             {
                 Success = true,
@@ -472,16 +471,16 @@ public class LaptopService
         }
         catch
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }
 
-    public async Task<byte[]> ExportLaptopsToExcelAsync(LaptopQueryParameters query)
+    public async Task<byte[]> ExportLaptopsToExcelAsync(LaptopQueryParameters query, CancellationToken cancellationToken)
     {
         query.Page = 1;
         query.PageSize = 10000;
-        var paged = await GetLaptopsAsync(query);
+        var paged = await GetLaptopsAsync(query, cancellationToken);
 
         using var workbook = new ClosedXML.Excel.XLWorkbook();
         var ws = workbook.Worksheets.Add("Laptops");

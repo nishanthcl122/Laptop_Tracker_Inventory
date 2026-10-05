@@ -27,7 +27,7 @@ public class RasImportService
         _reconciliation = reconciliation;
     }
 
-    public async Task<RasPreviewDto> PreviewRasAsync(IFormFile file, DateOnly snapshotDate)
+    public async Task<RasPreviewDto> PreviewRasAsync(IFormFile file, DateOnly snapshotDate, CancellationToken cancellationToken)
     {
         var result = new RasPreviewDto
         {
@@ -36,8 +36,8 @@ public class RasImportService
         };
 
         // 1. Detect Dual-Mode: INITIAL vs RECONCILIATION
-        bool previousBaselineExists = await _db.ImportBatches.AnyAsync(b => b.BatchType == "RAS" && (b.Status == "COMMITTED" || b.Status == "CONFIRMED"))
-                                      || await _db.RASCurrents.AnyAsync();
+        bool previousBaselineExists = await _db.ImportBatches.AnyAsync(b => b.BatchType == "RAS" && (b.Status == "COMMITTED" || b.Status == "CONFIRMED"), cancellationToken)
+                                      || await _db.RASCurrents.AnyAsync(cancellationToken);
 
         string mode = previousBaselineExists ? "RECONCILIATION" : "INITIAL";
         result.Mode = mode;
@@ -66,11 +66,25 @@ public class RasImportService
         // 3. Robust Header Row Detection (scan first 15 rows for highest header score)
         int firstRow = worksheet.FirstRowUsed()!.RowNumber();
         int lastRow = worksheet.LastRowUsed()!.RowNumber();
+
+        const int MaxRows = 5000;
+        if (lastRow > MaxRows)
+        {
+            result.Errors.Add(new ValidationErrorDto
+            {
+                Row = 1,
+                Field = "File",
+                Message = $"Worksheet exceeds maximum supported row count ({MaxRows})."
+            });
+
+            return result;
+        }
         IXLRow? headerRow = null;
         int maxHeaderScore = -1;
 
         for (int r = firstRow; r <= Math.Min(firstRow + 15, lastRow); r++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var row = worksheet.Row(r);
             if (row.IsEmpty()) continue;
 
@@ -119,12 +133,25 @@ public class RasImportService
         result.ColumnsDetected = detectedHeaders;
         result.ColumnCount = detectedHeaders.Count;
 
+        const int MaxColumns = 68;
+
+        if (detectedHeaders.Count > MaxColumns)
+        {
+            result.Errors.Add(new ValidationErrorDto
+            {
+                Row = headerRow.RowNumber(),
+                Field = "File",
+                Message = $"Worksheet exceeds maximum supported column count ({MaxColumns})."
+            });
+
+            return result;
+        }
+
+
         // 5. Identify key columns with comprehensive candidate lists
         int sapCol = FindColumn(colMap, out string? matchedSapHeader,
             "Employee Code", "EmployeeCode", "Emp Code", "EmpCode",
-            "SAP ID", "Employee SAP ID", "SAPID", "SAP",
-            "Employee ID", "EmployeeID", "Emp ID", "EmpID",
-            "Personnel Number", "PersonnelNumber", "Staff ID", "User ID");
+            "SAP ID", "SAPID", "SAP","Employee ID", "EmployeeID", "Emp ID", "EmpID", "User ID");
 
         int nameCol = FindColumn(colMap, out string? matchedNameHeader,
             "Employee Name", "EmployeeName", "Emp Name", "EmpName",
@@ -132,13 +159,10 @@ public class RasImportService
             "Employee", "Name");
 
         int lwdCol = FindColumn(colMap, out string? matchedLwdHeader,
-            "LastWorkingDay", "Last Working Day", "Last Working Date", "LWD",
-            "Separation Date", "Relieving Date", "Exit Date", "LastDate");
+            "LastWorkingDay", "Last Working Day", "Last Working Date", "LWD");
 
         int locCol = FindColumn(colMap, out string? matchedLocHeader,
-            "PSA", "PSA Description", "PSA Desc", "Personnel Subarea", "Personnel Sub Area", "Personnel Subarea Desc",
-            "Base Location", "BaseLocation", "Employee Location", "EmployeeLocation",
-            "Work Location", "WorkLocation", "Location", "City", "Office Location", "Branch");
+            "PSA", "PSA Description");
 
         if (matchedSapHeader != null) result.DetectedKeyColumns["SAP ID / Employee Code"] = matchedSapHeader;
         if (matchedNameHeader != null) result.DetectedKeyColumns["Employee Name"] = matchedNameHeader;
@@ -167,7 +191,7 @@ public class RasImportService
             UploadedAt = DateTimeOffset.UtcNow
         };
         _db.ImportBatches.Add(batch);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
         result.BatchId = batch.BatchId;
 
         // 7. Parse and stage actual data rows
@@ -243,10 +267,10 @@ public class RasImportService
             }
             string rawJson = JsonSerializer.Serialize(rowDataDict);
 
-            string? psaVal = GetVal(rowDataDict, "PSA", "PSA Description", "PSA Desc", "Personnel Subarea", "Personnel Sub Area", "Personnel Subarea Desc") ?? location;
+            string? psaVal = GetVal(rowDataDict, "PSA", "PSA Description") ?? location;
             DateOnly? startDate = GetDate(row, colMap, rowDataDict, "Start Date", "StartDate");
             DateOnly? endDate = GetDate(row, colMap, rowDataDict, "End Date", "EndDate");
-            DateOnly? lwd = ParseDateCell(row, lwdCol) ?? GetDate(row, colMap, rowDataDict, "LastWorkingDay", "Last Working Day", "Last Working Date", "LWD", "Separation Date", "Relieving Date", "Exit Date", "LastDate");
+            DateOnly? lwd = ParseDateCell(row, lwdCol) ?? GetDate(row, colMap, rowDataDict, "LastWorkingDay", "Last Working Day", "Last Working Date", "LWD");
 
             var historical = new RASHistorical
             {
@@ -351,8 +375,8 @@ public class RasImportService
         batch.ErrorCount = result.InvalidRows + result.ExactDuplicateRows;
 
         // Persist staged historical rows
-        await _db.RASHistoricals.AddRangeAsync(incomingRas);
-        await _db.SaveChangesAsync();
+        await _db.RASHistoricals.AddRangeAsync(incomingRas, cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
 
         // 8. Dual-Mode Evaluation
         if (mode == "INITIAL")
@@ -374,9 +398,9 @@ public class RasImportService
         {
             // RECONCILIATION Mode: compare distinct SAPs against previous accepted baseline
             var previousSaps = await _db.RASCurrents
-                .Select(r => r.SAPId)
+                .Select(r => r.EmployeeCode)
                 .Distinct()
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
             var prevSapSet = new HashSet<string>(previousSaps, StringComparer.OrdinalIgnoreCase);
             var incomingSapSet = distinctSapIds;
 
@@ -394,7 +418,7 @@ public class RasImportService
             var prevRasLwds = await _db.RASCurrents
                 .Where(r => r.LastWorkingDay.HasValue)
                 .GroupBy(r => r.EmployeeCode)
-                .ToDictionaryAsync(g => g.Key, g => g.Max(r => r.LastWorkingDay)!.Value, StringComparer.OrdinalIgnoreCase);
+                .ToDictionaryAsync(g => g.Key, g => g.Max(r => r.LastWorkingDay)!.Value, StringComparer.OrdinalIgnoreCase, cancellationToken);
 
             var incomingRasLwds = incomingRas
                 .Where(r => r.LastWorkingDay.HasValue)
@@ -403,7 +427,7 @@ public class RasImportService
 
             var allocatedLaptops = await _db.LaptopCurrents
                 .Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && l.SAPId != null)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             var affectedList = new List<AffectedLaptopDto>();
             foreach (var lap in allocatedLaptops)
@@ -437,13 +461,13 @@ public class RasImportService
             batch.ChangedCount = affectedList.Count;
         }
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
         return result;
     }
 
-    public async Task<ImportResultDto> ConfirmRasAsync(int batchId)
+    public async Task<ImportResultDto> ConfirmRasAsync(int batchId, CancellationToken cancellationToken)
     {
-        return await _reconciliation.ConfirmRasBatchAsync(batchId);
+        return await _reconciliation.ConfirmRasBatchAsync(batchId, cancellationToken);
     }
 
     private static int FindColumn(Dictionary<string, int> map, out string? matchedHeader, params string[] candidates)

@@ -18,9 +18,9 @@ public class RasReconciliationService
         _db = db;
     }
 
-    public async Task<ImportResultDto> ConfirmRasBatchAsync(int batchId)
+    public async Task<ImportResultDto> ConfirmRasBatchAsync(int batchId, CancellationToken cancellationToken)
     {
-        var batch = await _db.ImportBatches.FirstOrDefaultAsync(b => b.BatchId == batchId);
+        var batch = await _db.ImportBatches.FirstOrDefaultAsync(b => b.BatchId == batchId, cancellationToken);
         if (batch == null)
         {
             return new ImportResultDto { Success = false, Message = $"RAS Batch #{batchId} not found." };
@@ -34,7 +34,7 @@ public class RasReconciliationService
         var stagedRasRows = await _db.RASHistoricals
             .Where(r => r.BatchId == batchId)
             .OrderBy(r => r.HistoryId)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         if (stagedRasRows.Count == 0)
         {
@@ -42,9 +42,9 @@ public class RasReconciliationService
         }
 
         // Determine if this is an INITIAL baseline commit or SUBSEQUENT reconciliation
-        bool isInitialMode = batch.ImportMode == "INITIAL" || !await _db.RASCurrents.AnyAsync();
+        bool isInitialMode = batch.ImportMode == "INITIAL" || !await _db.RASCurrents.AnyAsync(cancellationToken);
 
-        using var transaction = await _db.Database.BeginTransactionAsync();
+        using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var incomingSapSet = new HashSet<string>(stagedRasRows.Select(r => r.EmployeeCode), StringComparer.OrdinalIgnoreCase);
@@ -56,17 +56,17 @@ public class RasReconciliationService
                 // ==========================================
                 // Overwrite RASCurrent with the initial baseline workforce (all valid rows preserved)
                 _db.RASCurrents.RemoveRange(_db.RASCurrents);
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync(cancellationToken);
 
                 var initialCurrentRas = stagedRasRows.Select(MapHistoricalToCurrent).ToList();
 
-                await _db.RASCurrents.AddRangeAsync(initialCurrentRas);
-                await _db.SaveChangesAsync();
+                await _db.RASCurrents.AddRangeAsync(initialCurrentRas, cancellationToken);
+                await _db.SaveChangesAsync(cancellationToken);
 
                 // Establish IsLost & RASStatus for all allocated laptops
                 var allocatedLaptops = await _db.LaptopCurrents
                     .Where(l => l.Status == "Allocated" || l.Status == "ALLOCATED")
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 int activeCount = 0;
                 int lostCount = 0;
@@ -89,8 +89,8 @@ public class RasReconciliationService
                 }
 
                 batch.Status = "COMMITTED";
-                await _db.SaveChangesAsync();
-                await transaction.CommitAsync();
+                await _db.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
                 return new ImportResultDto
                 {
@@ -111,7 +111,7 @@ public class RasReconciliationService
                 // 2. SUBSEQUENT RECONCILIATION COMMIT FLOW
                 // ==========================================
                 // Load full previous RAS records before deleting them to capture previous accepted state
-                var previousRasRows = await _db.RASCurrents.AsNoTracking().ToListAsync();
+                var previousRasRows = await _db.RASCurrents.AsNoTracking().ToListAsync(cancellationToken);
                 var previousRasSaps = previousRasRows.Select(r => r.EmployeeCode).Distinct().ToList();
                 var prevSet = new HashSet<string>(previousRasSaps, StringComparer.OrdinalIgnoreCase);
 
@@ -132,17 +132,17 @@ public class RasReconciliationService
 
                 // Overwrite RASCurrent to represent latest accepted workforce (all valid rows preserved)
                 _db.RASCurrents.RemoveRange(_db.RASCurrents);
-                await _db.SaveChangesAsync();
+                await _db.SaveChangesAsync(cancellationToken);
 
                 var newCurrentRas = stagedRasRows.Select(MapHistoricalToCurrent).ToList();
 
-                await _db.RASCurrents.AddRangeAsync(newCurrentRas);
-                await _db.SaveChangesAsync();
+                await _db.RASCurrents.AddRangeAsync(newCurrentRas, cancellationToken);
+                await _db.SaveChangesAsync(cancellationToken);
 
                 // Reconcile Allocated Laptops:
                 var allocatedLaptops = await _db.LaptopCurrents
                     .Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && l.SAPId != null)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 var auditEntries = new List<LaptopAuditHistory>();
                 int notInUhgCount = 0;
@@ -234,12 +234,12 @@ public class RasReconciliationService
 
                 if (auditEntries.Count > 0)
                 {
-                    await _db.LaptopAuditHistories.AddRangeAsync(auditEntries);
+                    await _db.LaptopAuditHistories.AddRangeAsync(auditEntries, cancellationToken);
                 }
 
                 batch.Status = "COMMITTED";
-                await _db.SaveChangesAsync();
-                await transaction.CommitAsync();
+                await _db.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
 
                 return new ImportResultDto
                 {
@@ -257,9 +257,9 @@ public class RasReconciliationService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             batch.Status = "FAILED";
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
             return new ImportResultDto
             {
                 Success = false,

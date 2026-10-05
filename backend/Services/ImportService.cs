@@ -7,6 +7,7 @@ using LaptopTracking.Api.Models.DTOs;
 using LaptopTracking.Api.Models.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace LaptopTracking.Api.Services;
 
@@ -15,15 +16,17 @@ public class ImportService
     private readonly LaptopDbContext _db;
     private readonly ExcelParserService _parser;
     private readonly ComparisonEngine _comparisonEngine;
+    private readonly ILogger<ImportService> _logger;
 
-    public ImportService(LaptopDbContext db, ExcelParserService parser, ComparisonEngine comparisonEngine)
+    public ImportService(LaptopDbContext db, ExcelParserService parser, ComparisonEngine comparisonEngine, ILogger<ImportService> logger)
     {
         _db = db;
         _parser = parser;
         _comparisonEngine = comparisonEngine;
+        _logger = logger;
     }
 
-    public async Task<ImportPreviewDto> PreviewImportAsync(IFormFile file, DateOnly snapshotDate)
+    public async Task<ImportPreviewDto> PreviewImportAsync(IFormFile file, DateOnly snapshotDate,CancellationToken cancellationToken)
     {
         using var stream = file.OpenReadStream();
         
@@ -38,7 +41,7 @@ public class ImportService
         };
 
         _db.ImportBatches.Add(batch);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         // 2. Parse and Validate Excel
         var parseResult = _parser.ParseAndValidate(stream, batch.BatchId);
@@ -47,7 +50,7 @@ public class ImportService
         {
             batch.Status = "FAILED";
             batch.ErrorCount = parseResult.Errors.Count;
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
 
             return new ImportPreviewDto
             {
@@ -62,13 +65,13 @@ public class ImportService
         // 3. Load Current Accepted Laptops Dictionary (O(1) lookup by SerialNumber)
         var currentLaptops = await _db.LaptopCurrents
             .AsNoTracking()
-            .ToDictionaryAsync(x => x.SerialNumber, StringComparer.OrdinalIgnoreCase);
+            .ToDictionaryAsync(x => x.SerialNumber, StringComparer.OrdinalIgnoreCase, cancellationToken);
 
         // 4. Run Comparison Engine
         var comparison = _comparisonEngine.Compare(currentLaptops, parseResult.ValidRows);
 
         // 5. Stage Processed Rows
-        await _db.ImportBatchRows.AddRangeAsync(comparison.ProcessedRows);
+        await _db.ImportBatchRows.AddRangeAsync(comparison.ProcessedRows, cancellationToken);
 
         // 6. Update Batch Stats
         batch.RecordCount = comparison.ProcessedRows.Count;
@@ -76,7 +79,7 @@ public class ImportService
         batch.ChangedCount = comparison.ChangedCount;
         batch.UnchangedCount = comparison.UnchangedCount;
         batch.MissingCount = comparison.MissingCount;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         return new ImportPreviewDto
         {
@@ -93,9 +96,9 @@ public class ImportService
         };
     }
 
-    public async Task<ImportResultDto> ConfirmImportAsync(int batchId)
+    public async Task<ImportResultDto> ConfirmImportAsync(int batchId, CancellationToken cancellationToken)
     {
-        var batch = await _db.ImportBatches.FindAsync(batchId);
+        var batch = await _db.ImportBatches.FirstOrDefaultAsync(b => b.BatchId == batchId, cancellationToken);
         if (batch == null)
         {
             return new ImportResultDto { Success = false, Message = $"Batch #{batchId} not found." };
@@ -108,17 +111,17 @@ public class ImportService
 
         var stagedRows = await _db.ImportBatchRows
             .Where(r => r.BatchId == batchId && r.ValidationStatus == "VALID")
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
-        using var transaction = await _db.Database.BeginTransactionAsync();
+        using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var incomingSerials = stagedRows.Select(r => r.SerialNumber).ToList();
             var existingLaptops = await _db.LaptopCurrents
                 .Where(c => incomingSerials.Contains(c.SerialNumber))
-                .ToDictionaryAsync(c => c.SerialNumber, StringComparer.OrdinalIgnoreCase);
+                .ToDictionaryAsync(c => c.SerialNumber, StringComparer.OrdinalIgnoreCase, cancellationToken);
 
-            var existingRasSaps = await _db.RASCurrents.Select(r => r.EmployeeCode).ToListAsync();
+            var existingRasSaps = await _db.RASCurrents.Select(r => r.EmployeeCode).ToListAsync(cancellationToken);
             var rasSapSet = new HashSet<string>(existingRasSaps, StringComparer.OrdinalIgnoreCase);
             bool hasRasBaseline = rasSapSet.Count > 0;
 
@@ -223,17 +226,17 @@ public class ImportService
 
             if (newLaptops.Count > 0)
             {
-                await _db.LaptopCurrents.AddRangeAsync(newLaptops);
+                await _db.LaptopCurrents.AddRangeAsync(newLaptops, cancellationToken);
             }
 
             if (auditEntries.Count > 0)
             {
-                await _db.LaptopAuditHistories.AddRangeAsync(auditEntries);
+                await _db.LaptopAuditHistories.AddRangeAsync(auditEntries, cancellationToken);
             }
 
             batch.Status = "CONFIRMED";
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
             return new ImportResultDto
             {
@@ -250,13 +253,14 @@ public class ImportService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             batch.Status = "FAILED";
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync(cancellationToken);
+            _logger.LogError(ex, $"Failed to commit batch {batchId}");
             return new ImportResultDto
             {
                 Success = false,
-                Message = $"Failed to commit batch: {ex.Message}",
+                Message = "Failed to commit batch",
                 BatchId = batch.BatchId
             };
         }
