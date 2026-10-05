@@ -17,15 +17,15 @@ export default function LwdRiskHierarchy({ totalCount = 0, breakdown = [], onOpe
   const buckets = Array.isArray(breakdown) && breakdown.length > 0
     ? breakdown
     : [
-        { name: 'Overdue', value: 0 },
-        { name: '0–7 days', value: 0 },
-        { name: '8–15 days', value: 0 }
-      ];
+      { name: 'Overdue', value: 0 },
+      { name: '0–7 days', value: 0 },
+      { name: '8–15 days', value: 0 }
+    ];
 
   const hasAnyData = totalCount > 0 || buckets.some((b) => Number(b?.value ?? 0) > 0);
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 margin-top-2px">
       {/* Primary KPI Card: LWD < 15 Days */}
       <div
         onClick={() => setIsExpanded((prev) => !prev)}
@@ -61,7 +61,7 @@ export default function LwdRiskHierarchy({ totalCount = 0, breakdown = [], onOpe
               e.stopPropagation();
               onOpenModal(null);
             }}
-            className="total-assets-value hover:underline cursor-pointer"
+            className="total-assets-value  cursor-pointer"
             title="View all upcoming LWD risk laptops"
           >
             {totalCount.toLocaleString()}
@@ -84,42 +84,43 @@ export default function LwdRiskHierarchy({ totalCount = 0, breakdown = [], onOpe
           ) : (
             <>
               {/* Section Sub-heading */}
-              <div className="px-0.5 pt-0.5">
+              {/* <div className="px-0.5 pt-0.5">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   LWD Exit Risk Breakdown
                 </span>
-              </div>
+              </div> */}
 
               {/* Compact Breakdown List */}
-              <div className="bg-white rounded-xl border border-slate-200/80 divide-y divide-slate-100 overflow-hidden shadow-2xs">
-                {buckets.map((bucket) => {
-                  const val = Number(bucket?.value ?? 0);
-                  const color = BUCKET_COLORS[bucket.name] || '#64748b';
+              <div className="lwd-breakdown-container">
+                <div className="lwd-breakdown-grid">
+                  {buckets.map((bucket) => {
+                    const val = Number(bucket?.value ?? 0);
+                    const color = BUCKET_COLORS[bucket.name] || '#64748b';
 
-                  return (
-                    <button
-                      key={bucket.name}
-                      type="button"
-                      onClick={() => onOpenModal(bucket.name)}
-                      className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-amber-50/40 transition-colors text-left cursor-pointer group"
-                      title={`Filter by ${bucket.name}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ background: color }}
-                        />
-                        <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-                          {bucket.name}
-                        </span>
-                      </div>
+                    return (
+                      <button
+                        key={bucket.name}
+                        type="button"
+                        onClick={() => onOpenModal(bucket.name)}
+                        className="lwd-mini-card"
+                        style={{ color }}
+                      >
+                        <div className="lwd-mini-card-header">
+                          <span
+                            className="lwd-mini-dot"
+                            style={{ background: color }}
+                          />
 
-                      <span className="text-xs font-bold text-slate-900 font-mono group-hover:text-amber-900 transition-colors">
-                        {val.toLocaleString()}
-                      </span>
-                    </button>
-                  );
-                })}
+                          <span className="lwd-mini-label">
+                            {bucket.name}
+                          </span>
+                        </div>
+
+                        <strong>{val.toLocaleString()}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </>
           )}

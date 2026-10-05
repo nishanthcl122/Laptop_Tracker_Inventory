@@ -1,5 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, Search, ChevronUp, ChevronDown, UserMinus, RefreshCw, Calendar, MapPin } from 'lucide-react';
+import {
+  X,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  UserMinus,
+  Calendar,
+  MapPin,
+  Users,
+  Globe2,
+  Building2
+} from 'lucide-react';
 import dayjs from 'dayjs';
 import { api } from '../services/api';
 import ExcelColumnFilter from './ExcelColumnFilter';
@@ -173,6 +184,13 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
   };
 
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
+  const workforceStats = displayedEmployees.reduce((stats, employee) => {
+    const type = (employee.wbsType || '').toLowerCase();
+    if (type === 'offshore') stats.offshore += 1;
+    if (type === 'onsite') stats.onsite += 1;
+    if (type === 'nearshore') stats.nearshore += 1;
+    return stats;
+  }, { offshore: 0, onsite: 0, nearshore: 0 });
   const hasActiveFilters = Boolean(
     search.trim() ||
     (location && location !== 'ALL') ||
@@ -187,25 +205,25 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-purple-950 via-slate-900 to-slate-900 text-white flex items-center justify-between border-b border-purple-900/40">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 shadow-xs">
-              <UserMinus className="w-5 h-5 text-purple-400" />
+        <div className="px-6 py-4 bg-gradient-to-r from-purple-950 via-slate-900 to-slate-800 text-white flex items-center justify-between border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-purple-400/15 border border-purple-200/20 flex items-center justify-center text-purple-200 shadow-inner">
+              <UserMinus className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center space-x-2.5">
-                <h2 className="text-base font-bold text-white tracking-tight">
+              <div className="flex items-center flex-wrap gap-2.5">
+                <h2 className="text-base font-semibold text-white tracking-tight">
                   {getHeaderTitle()}
                 </h2>
-                <span className="px-2.5 py-0.5 text-xs font-mono font-bold bg-purple-900/70 text-purple-200 rounded-full border border-purple-700">
-                  {totalCount} Unallocated
+                <span className="px-2.5 py-1 text-xs font-semibold tabular-nums bg-purple-400/15 text-purple-100 rounded-full border border-purple-200/25 shadow-sm">
+                  {totalCount.toLocaleString()} Unallocated
                 </span>
               </div>
-              <p className="text-xs text-purple-200/70 mt-0.5">
+              <p className="text-xs text-slate-300/80 mt-1">
                 Employees in current RAS dump with no active allocated laptop
               </p>
             </div>
@@ -214,25 +232,66 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            title="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Workforce summary from the currently displayed dataset */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 px-6 py-3 bg-white border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5 shadow-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+              <Users className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total employees</span>
+              <span className="mt-0.5 block text-base font-bold leading-none tabular-nums text-slate-800">{displayedEmployees.length}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-purple-100 bg-purple-50/60 px-3.5 py-2.5 shadow-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+              <Globe2 className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-purple-500">Offshore</span>
+              <span className="mt-0.5 block text-base font-bold leading-none tabular-nums text-purple-900">{workforceStats.offshore}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/60 px-3.5 py-2.5 shadow-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+              <Building2 className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-blue-500">Onsite</span>
+              <span className="mt-0.5 block text-base font-bold leading-none tabular-nums text-blue-900">{workforceStats.onsite}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3.5 py-2.5 shadow-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+              <Globe2 className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-emerald-600">Nearshore</span>
+              <span className="mt-0.5 block text-base font-bold leading-none tabular-nums text-emerald-900">{workforceStats.nearshore}</span>
+            </span>
+          </div>
+        </div>
+
         {/* Toolbar: Search & Reset */}
-        <div className="px-6 py-2.5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between gap-3">
+        <div className="px-6 py-3 border-b border-slate-200/80 bg-slate-50/80 flex items-center justify-between gap-3 shrink-0">
           {/* Search Box */}
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <Search className="w-3.5 h-3.5" />
+              <Search className="w-4 h-4" />
             </div>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by SAP ID, Name, or Location..."
-              className="w-full pl-9 pr-3 h-8.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-slate-800 placeholder-slate-400 shadow-2xs"
+              className="w-full pl-9 pr-3 h-9 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 text-slate-800 placeholder-slate-400 shadow-sm transition-shadow"
             />
           </div>
 
@@ -241,7 +300,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
             <button
               type="button"
               onClick={handleResetAll}
-              className="px-3 h-8.5 text-xs text-purple-700 font-semibold bg-purple-50 border border-purple-200 hover:bg-purple-100 rounded-lg transition-colors cursor-pointer shrink-0"
+              className="px-3.5 h-9 text-xs text-purple-700 font-semibold bg-white border border-purple-200 hover:bg-purple-50 rounded-lg shadow-sm transition-colors cursor-pointer shrink-0"
               title="Reset all filters"
             >
               Reset
@@ -250,12 +309,12 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
         </div>
 
         {/* Table Content with Header Filters */}
-        <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-left text-xs text-slate-600 divide-y divide-slate-100">
-            <thead className="bg-slate-100/90 text-slate-700 font-semibold uppercase tracking-wider text-[11px] sticky top-0 z-10 border-b border-slate-200">
+        <div className="flex-1 overflow-auto bg-slate-50/60 px-3 pb-2">
+          <table className="w-full border-separate border-spacing-x-0 border-spacing-y-2 text-left text-xs text-slate-600">
+            <thead className="sticky top-0 z-10 bg-slate-100/90 text-slate-600 font-semibold uppercase tracking-wider text-[10px] backdrop-blur-md">
               <tr>
                 {/* SAP ID */}
-                <th className="py-2.5 px-4 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
+                <th className="py-3 px-4 rounded-l-xl border-y border-l border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
                   <div className="flex items-center justify-between">
                     <span onClick={() => handleSort('sapId')} className="cursor-pointer flex-1">
                       SAP ID {getSortIcon('sapId')}
@@ -271,7 +330,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 </th>
 
                 {/* Employee Name */}
-                <th className="py-2.5 px-4 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
+                <th className="py-3 px-4 border-y border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
                   <div className="flex items-center justify-between">
                     <span onClick={() => handleSort('employeeName')} className="cursor-pointer flex-1">
                       Employee Name {getSortIcon('employeeName')}
@@ -287,7 +346,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 </th>
 
                 {/* Status */}
-                <th className="py-2.5 px-4 text-center hover:bg-slate-200/80 transition-colors whitespace-nowrap">
+                <th className="py-3 px-4 text-center border-y border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
                   <div className="flex items-center justify-center space-x-1">
                     <span onClick={() => handleSort('employeeStatus')} className="cursor-pointer">
                       Status {getSortIcon('employeeStatus')}
@@ -303,7 +362,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 </th>
 
                 {/* WBS Type */}
-                <th className="py-2.5 px-4 text-center hover:bg-slate-200/80 transition-colors whitespace-nowrap">
+                <th className="py-3 px-4 text-center border-y border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
                   <div className="flex items-center justify-center space-x-1">
                     <span onClick={() => handleSort('wbsType')} className="cursor-pointer">
                       WBS Type {getSortIcon('wbsType')}
@@ -319,7 +378,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 </th>
 
                 {/* RAS Location (PSA) */}
-                <th className="py-2.5 px-4 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
+                <th className="py-3 px-4 border-y border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
                   <div className="flex items-center justify-between">
                     <span onClick={() => handleSort('location')} className="cursor-pointer flex-1">
                       RAS Location (PSA) {getSortIcon('location')}
@@ -337,7 +396,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 {/* Last Working Day */}
                 <th
                   onClick={() => handleSort('lastWorkingDay')}
-                  className="py-2.5 px-4 cursor-pointer hover:bg-slate-200/80 transition-colors whitespace-nowrap"
+                  className="py-3 px-4 border-y border-slate-200/80 bg-slate-100/90 cursor-pointer hover:bg-slate-200/80 transition-colors whitespace-nowrap"
                 >
                   Last Working Day {getSortIcon('lastWorkingDay')}
                 </th>
@@ -345,100 +404,147 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 {/* Roster Snapshot */}
                 <th
                   onClick={() => handleSort('snapshotDate')}
-                  className="py-2.5 px-4 text-right cursor-pointer hover:bg-slate-200/80 transition-colors whitespace-nowrap"
+                  className="py-3 px-4 rounded-r-xl border-y border-r border-slate-200/80 bg-slate-100/90 text-right cursor-pointer hover:bg-slate-200/80 transition-colors whitespace-nowrap"
                 >
                   Roster Snapshot {getSortIcon('snapshotDate')}
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan="7" className="py-12 text-center text-slate-400">
-                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-purple-500" />
-                    Loading unallocated RAS employees...
-                  </td>
-                </tr>
+                [...Array(5)].map((_, index) => (
+                  <tr key={`ras-idle-skeleton-${index}`} className="animate-pulse">
+                    {[0, 1, 2, 3, 4, 5, 6].map((column) => (
+                      <td
+                        key={column}
+                        className={`py-4 px-4 border-y border-slate-100 bg-white shadow-sm ${
+                          column === 0 ? 'rounded-l-xl border-l-2 border-l-purple-400' : ''
+                        } ${column === 6 ? 'rounded-r-xl border-r' : ''}`}
+                      >
+                        <div className={`h-3 rounded-full bg-slate-100 ${column === 1 ? 'w-3/4' : 'w-2/3'}`} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : displayedEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center text-slate-400">
-                    <UserMinus className="w-8 h-8 mx-auto mb-2 text-slate-300 stroke-1" />
-                    No resource without laptop found matching criteria.
+                  <td colSpan="7" className="py-16 px-6">
+                    <div className="mx-auto flex max-w-sm flex-col items-center text-center">
+                      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 to-slate-50 text-purple-500 shadow-sm">
+                        <UserMinus className="h-8 w-8 stroke-[1.5]" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800">No idle employees found</p>
+                      <p className="mt-1.5 text-xs leading-5 text-slate-500">
+                        No workforce records match the current search and filters. Try adjusting your criteria.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                displayedEmployees.map((emp) => (
+                displayedEmployees.map((emp) => {
+                  const wbsType = (emp.wbsType || '').toLowerCase();
+                  const wbsStyles = wbsType === 'offshore'
+                    ? 'border-purple-200 bg-purple-50 text-purple-700'
+                    : wbsType === 'onsite'
+                    ? 'border-blue-200 bg-blue-50 text-blue-700'
+                    : wbsType === 'nearshore'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-slate-200 bg-slate-100 text-slate-600';
+                  const status = (emp.employeeStatus || 'Active').toLowerCase();
+                  const statusStyles = status === 'active'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : status.includes('resign') || status.includes('separat')
+                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    : 'border-slate-200 bg-slate-100 text-slate-700';
+                  const accentStyles = wbsType === 'offshore'
+                    ? 'border-l-purple-500'
+                    : wbsType === 'onsite'
+                    ? 'border-l-blue-500'
+                    : wbsType === 'nearshore'
+                    ? 'border-l-emerald-500'
+                    : 'border-l-slate-300';
+
+                  return (
                   <tr
                     key={emp.sapId}
-                    className="hover:bg-purple-50/30 transition-colors"
+                    className="group transition-all duration-200 hover:-translate-y-px hover:drop-shadow-md"
                   >
-                    <td className="py-2.5 px-4 font-mono font-medium text-slate-900">
-                      {emp.sapId}
+                    <td className={`py-3.5 px-4 align-middle rounded-l-xl border-y border-l-2 border-y-slate-200/80 ${accentStyles} bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100`}>
+                      <div className="font-mono text-[13px] font-bold tracking-tight text-slate-900 group-hover:text-purple-800">
+                        SAP {emp.sapId}
+                      </div>
+                      <div className="mt-1 text-[10px] font-medium text-slate-400">Workforce record</div>
                     </td>
-                    <td className="py-2.5 px-4 font-medium text-slate-900">
-                      {emp.employeeName}
+                    <td className="py-3.5 px-4 align-middle border-y border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">
+                      <div className="font-semibold text-slate-900">{emp.employeeName || '—'}</div>
+                      <div className="mt-1 text-[10px] text-slate-400">Employee</div>
                     </td>
-                    <td className="py-2.5 px-4 text-center">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    <td className="py-3.5 px-4 text-center align-middle border-y border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${statusStyles}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${status === 'active' ? 'bg-emerald-500' : status.includes('resign') || status.includes('separat') ? 'bg-rose-500' : 'bg-slate-400'}`} />
                         {emp.employeeStatus || 'Active'}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4 text-center">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                    <td className="py-3.5 px-4 text-center align-middle border-y border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold border ${wbsStyles}`}>
                         {emp.wbsType || '—'}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4">
-                      <span className="inline-flex items-center gap-1 text-slate-700">
-                        <MapPin className="w-3 h-3 text-slate-400" />
+                    <td className="py-3.5 px-4 align-middle border-y border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                        <MapPin className="w-3.5 h-3.5 text-purple-500" />
                         {emp.location || '—'}
                       </span>
                     </td>
-                    <td className="py-2.5 px-4">
+                    <td className="py-3.5 px-4 align-middle border-y border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">
                       {emp.lastWorkingDay ? (
-                        <span className="inline-flex items-center gap-1 font-mono text-slate-700">
-                          <Calendar className="w-3 h-3 text-slate-400" />
+                        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-slate-500">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           {formatDate(emp.lastWorkingDay)}
                         </span>
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
                     </td>
-                    <td className="py-2.5 px-4 text-right font-mono text-slate-500">
-                      {formatDate(emp.snapshotDate)}
+                    <td className="py-3.5 px-4 text-right align-middle rounded-r-xl border-y border-r border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">
+                      <span className="inline-flex items-center justify-end gap-1.5 font-mono text-[11px] text-slate-500">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        {formatDate(emp.snapshotDate)}
+                      </span>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
 
         {/* Footer: Pagination & Stats */}
-        <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500 shrink-0">
+        <div className="px-6 py-3.5 border-t border-slate-200/80 bg-slate-50/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 shrink-0">
           <div>
             Showing <strong className="text-slate-800">{displayedEmployees.length}</strong> of{' '}
             <strong className="text-slate-800">{totalCount}</strong> idle employees
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-2.5 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-purple-200 hover:bg-purple-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 Prev
               </button>
-              <span className="px-2 py-1 text-slate-600 font-mono">
+              <span className="px-2.5 py-1.5 rounded-lg text-slate-600 font-mono tabular-nums">
                 {page} / {totalPages}
               </span>
               <button
                 type="button"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-2.5 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-purple-200 hover:bg-purple-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 Next
               </button>

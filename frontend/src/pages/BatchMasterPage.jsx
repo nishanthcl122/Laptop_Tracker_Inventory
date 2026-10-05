@@ -285,7 +285,7 @@ export default function BatchMasterPage() {
             </div>
 
             {/* Staged Rows Sample */}
-            <div className="p-6 flex-1 overflow-y-auto">
+            {/* <div className="p-6 flex-1 overflow-y-auto">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
                 Staged Rows Sample (up to 50 rows)
               </h4>
@@ -327,7 +327,7 @@ export default function BatchMasterPage() {
                   No staged laptop rows recorded for this batch.
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* Modal Footer */}
             <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-end">
