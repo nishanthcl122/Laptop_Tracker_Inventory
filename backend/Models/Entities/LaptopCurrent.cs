@@ -1,4 +1,5 @@
 using System;
+using LaptopTracking.Api.Models;
 
 namespace LaptopTracking.Api.Models.Entities;
 
@@ -7,7 +8,7 @@ public class LaptopCurrent
     public string SerialNumber { get; set; } = string.Empty;
     public string FBRRequest { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
-    public string Status { get; set; } = "In Stock"; // Allocated, In Stock
+    public string Status { get; set; } = LaptopStatuses.InStock;
     public string? ITSPOC { get; set; }
     public string? SAPId { get; set; }
     public string? UserName { get; set; }

@@ -25,7 +25,7 @@ public class RasController : ControllerBase
     }
 
     [HttpPost("preview")]
-    public async Task<IActionResult> PreviewRas([FromForm] IFormFile? file, [FromForm] string? snapshotDate)
+    public async Task<IActionResult> PreviewRas([FromForm] IFormFile? file, [FromForm] string? snapshotDate, CancellationToken cancellationToken)
     {
         var validation = FileUploadValidator.Validate(file);
         if (!validation.IsValid)
@@ -39,19 +39,19 @@ public class RasController : ControllerBase
             date = parsed;
         }
 
-        var preview = await _importService.PreviewRasAsync(file!, date);
+        var preview = await _importService.PreviewRasAsync(file!, date, cancellationToken);
         return Ok(preview);
     }
 
     [HttpPost("confirm")]
-    public async Task<IActionResult> ConfirmRas([FromBody] ConfirmImportRequest request)
+    public async Task<IActionResult> ConfirmRas([FromBody] ConfirmImportRequest request, CancellationToken cancellationToken)
     {
         if (request == null || request.BatchId <= 0)
         {
             return BadRequest(new { message = "Valid BatchId is required." });
         }
 
-        var result = await _importService.ConfirmRasAsync(request.BatchId);
+        var result = await _importService.ConfirmRasAsync(request.BatchId, cancellationToken);
         if (!result.Success)
         {
             return BadRequest(result);
@@ -61,14 +61,14 @@ public class RasController : ControllerBase
     }
 
     [HttpPost("{batchId:int}/confirm")]
-    public async Task<IActionResult> ConfirmRasByRoute(int batchId)
+    public async Task<IActionResult> ConfirmRasByRoute(int batchId, CancellationToken cancellationToken)
     {
         if (batchId <= 0)
         {
             return BadRequest(new { message = "Valid BatchId is required." });
         }
 
-        var result = await _importService.ConfirmRasAsync(batchId);
+        var result = await _importService.ConfirmRasAsync(batchId, cancellationToken);
         if (!result.Success)
         {
             return BadRequest(result);
@@ -78,7 +78,7 @@ public class RasController : ControllerBase
     }
 
     [HttpGet("current")]
-    public async Task<IActionResult> GetCurrentRas([FromQuery] RasQueryParameters query)
+    public async Task<IActionResult> GetCurrentRas([FromQuery] RasQueryParameters query, CancellationToken cancellationToken)
     {
         var q = _db.RASCurrents.AsNoTracking().AsQueryable();
 
@@ -133,7 +133,7 @@ public class RasController : ControllerBase
             q = query.HasLwd.Value ? q.Where(r => r.LastWorkingDay != null) : q.Where(r => r.LastWorkingDay == null);
         }
 
-        int totalCount = await q.CountAsync();
+        int totalCount = await q.CountAsync(cancellationToken);
         int page = query.Page <= 0 ? 1 : query.Page;
         int pageSize = query.PageSize <= 0 ? 25 : query.PageSize;
 
@@ -164,7 +164,7 @@ public class RasController : ControllerBase
                 SnapshotDate = r.SnapshotDate,
                 RawDataJson = r.RawRecordJson ?? "{}"
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return Ok(new
         {
@@ -177,7 +177,7 @@ public class RasController : ControllerBase
     }
 
     [HttpGet("records/{sapId}")]
-    public async Task<IActionResult> GetRasRecords(string sapId)
+    public async Task<IActionResult> GetRasRecords(string sapId, CancellationToken cancellationToken)
     {
         var records = await _db.RASCurrents.AsNoTracking()
             .Where(r => r.EmployeeCode == sapId)
@@ -196,7 +196,7 @@ public class RasController : ControllerBase
                 SnapshotDate = record.SnapshotDate,
                 RawDataJson = record.RawRecordJson ?? "{}"
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         if (records.Count == 0)
         {

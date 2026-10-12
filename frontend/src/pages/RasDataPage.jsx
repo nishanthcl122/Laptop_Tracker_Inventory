@@ -7,8 +7,8 @@ const SECTION_MAPPINGS = [
   {
     title: 'Employee Details',
     keys: [
-      'SAPId', 'SAP ID', 'Employee Code', 'EmployeeCode',
-      'Employee Name', 'EmployeeName', 'Email', 'Email ID',
+      'SAPId', 'SAP ID', 'SAPID', 'SAP', 'Employee Code', 'EmployeeCode', 'Emp Code', 'EmpCode', 'Employee ID', 'EmployeeID', 'Emp ID', 'EmpID', 'User ID',
+      'Employee Name', 'EmployeeName', 'Emp Name', 'EmpName', 'Resource Name', 'ResourceName', 'Full Name', 'FullName', 'Employee', 'Name', 'Email', 'Email ID',
       'Band', 'SubBand', 'Sub Band',
       'Role', 'Role Name', 'RoleName',
       'Designation', 'Department', 'Job Name', 'JobName'
@@ -34,7 +34,7 @@ const SECTION_MAPPINGS = [
       'Joining Date', 'JoiningDate',
       'Start Date', 'StartDate',
       'End Date', 'EndDate',
-      'Last Working Day', 'LastWorkingDay', 'LWD',
+      'Last Working Day', 'LastWorkingDay', 'Last Working Date', 'LWD',
       'Requested Date', 'RequestedDate',
       'Snapshot Date', 'SnapshotDate'
     ]
@@ -82,7 +82,6 @@ const SECTION_MAPPINGS = [
     title: 'Administrative Data',
     keys: [
       'BatchId', 'Batch ID',
-      'SnapshotDate', 'Snapshot Date',
       'CreatedAt', 'Created At',
       'UpdatedAt', 'Updated At',
       'RowFingerprint', 'Row Fingerprint',
@@ -232,18 +231,24 @@ export default function RasDataPage({ onNavigateImport }) {
       }
     }
 
-    const merged = {
-      'SAP ID': inspectRecord.sapId,
-      'Employee Name': inspectRecord.employeeName,
-      'Location': inspectRecord.location,
-      'Employee Status': inspectRecord.employeeStatus,
-      'Start Date': inspectRecord.startDate,
-      'End Date': inspectRecord.endDate,
-      'Last Working Day': inspectRecord.lastWorkingDay,
-      'Snapshot Date': inspectRecord.snapshotDate,
-      'Batch ID': inspectRecord.batchId,
-      ...rawData
-    };
+    const normalizeHeader = (header) => header.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const dtoFallbacks = [
+      ['SAP ID', inspectRecord.sapId, ['SAP ID', 'SAPId', 'SAPID', 'SAP', 'Employee Code', 'EmployeeCode', 'Emp Code', 'EmpCode', 'Employee ID', 'EmployeeID', 'Emp ID', 'EmpID', 'User ID']],
+      ['Employee Name', inspectRecord.employeeName, ['Employee Name', 'EmployeeName', 'Emp Name', 'EmpName', 'Resource Name', 'ResourceName', 'Full Name', 'FullName', 'Employee', 'Name']],
+      ['Location', inspectRecord.location, ['PSA', 'Location']],
+      ['Employee Status', inspectRecord.employeeStatus, ['Employee Status', 'EmployeeStatus']],
+      ['Start Date', inspectRecord.startDate, ['Start Date', 'StartDate']],
+      ['End Date', inspectRecord.endDate, ['End Date', 'EndDate']],
+      ['Last Working Day', inspectRecord.lastWorkingDay, ['Last Working Day', 'LastWorkingDay', 'LWD']],
+      ['Snapshot Date', inspectRecord.snapshotDate, ['Snapshot Date', 'SnapshotDate']],
+      ['Batch ID', inspectRecord.batchId, ['Batch ID', 'BatchId']]
+    ];
+    const rawHeaders = Object.keys(rawData).map(normalizeHeader);
+    const merged = { ...rawData };
+    dtoFallbacks.forEach(([key, value, aliases]) => {
+      const hasRawValue = aliases.some((alias) => rawHeaders.includes(normalizeHeader(alias)));
+      if (!hasRawValue) merged[key] = value;
+    });
 
     const usedKeys = new Set();
     const query = fieldFilter.toLowerCase().trim();
@@ -255,7 +260,7 @@ export default function RasDataPage({ onNavigateImport }) {
         const foundEntry = Object.entries(merged).find(
           ([mKey]) => mKey.toLowerCase() === k.toLowerCase()
         );
-        if (foundEntry) {
+        if (foundEntry && !usedKeys.has(foundEntry[0].toLowerCase())) {
           const [origKey, val] = foundEntry;
           usedKeys.add(origKey.toLowerCase());
           if (val !== null && val !== undefined && val !== '') {
@@ -334,7 +339,7 @@ export default function RasDataPage({ onNavigateImport }) {
               type="text"
               value={location === 'ALL' ? '' : location}
               onChange={(e) => setLocation(e.target.value || 'ALL')}
-              placeholder="Filter by Location..."
+              placeholder="Filter by Location (PSA)..."
               className="w-full px-3 h-9 text-xs bg-slate-50/70 border border-slate-300 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder-slate-400 text-slate-800 transition-colors"
             />
           </div>
@@ -403,10 +408,10 @@ export default function RasDataPage({ onNavigateImport }) {
                 <th className="py-3 px-4 hover:bg-slate-200/70 transition-colors whitespace-nowrap">
                   <div className="flex items-center justify-between">
                     <span onClick={() => handleSort('location')} className="cursor-pointer flex-1">
-                      Location {getSortIcon('location')}
+                      Location (PSA) {getSortIcon('location')}
                     </span>
                     <ExcelColumnFilter
-                      title="Location"
+                      title="Location (PSA)"
                       columnKey="location"
                       selectedValues={columnFilters.location}
                       options={uniqueLocations}

@@ -1,4 +1,5 @@
 using System;
+using LaptopTracking.Api.Models;
 
 namespace LaptopTracking.Api.Models.Entities;
 
@@ -18,7 +19,7 @@ public class ImportBatchRow
     public DateOnly? EndDate { get; set; }
     public DateOnly? LastWorkingDay { get; set; }
     
-    public string ValidationStatus { get; set; } = "VALID"; // VALID, ERROR
+    public string ValidationStatus { get; set; } = ImportRowValidationStatuses.Valid;
     public string? ValidationMessage { get; set; }
     public string? ChangeType { get; set; } // NEW, CHANGED, UNCHANGED, MISSING
     public string? ChangedFields { get; set; }
