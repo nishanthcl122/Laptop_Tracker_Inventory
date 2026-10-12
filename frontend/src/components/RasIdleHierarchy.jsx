@@ -4,6 +4,8 @@ import { UserMinus, ChevronDown, MapPin, ChevronRight } from 'lucide-react';
 export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModal }) {
   const [isTotalExpanded, setIsTotalExpanded] = useState(true);
   const [showAllPsa, setShowAllPsa] = useState(false);
+  const [isOffshoreExpanded, setIsOffshoreExpanded] = useState(true);
+  const [isBillableExpanded, setIsBillableExpanded] = useState(true);
 
   const total = breakdown?.total ?? totalCount ?? 0;
   const offshore = breakdown?.offshore || {};
@@ -18,11 +20,11 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
   const displayedPsa = showAllPsa ? psaList : psaList.slice(0, 5);
 
   return (
-    <div className="space-y-2.5">
+    <div className='ras'>
       {/* Primary KPI Card: RAS Idle */}
       <div
         onClick={() => setIsTotalExpanded((prev) => !prev)}
-        className="total-assets-card"
+        className="total-assets-card m-0"
         title={isTotalExpanded ? 'Click to collapse breakdown' : 'Click to expand breakdown'}
         role="button"
         aria-expanded={isTotalExpanded}
@@ -69,7 +71,7 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
 
       {/* Expanded Breakdown */}
       {isTotalExpanded && (
-        <div className="space-y-2.5 transition-all duration-200 ease-out">
+        <div className="space-y-1 transition-all duration-200 ease-out">
           {total === 0 ? (
             <div className="p-4 rounded-xl border border-slate-200/80 bg-white text-center text-xs text-slate-400">
               No resource without laptop found.
@@ -77,21 +79,18 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
           ) : (
             <>
               {/* Section Sub-heading */}
-              <div className="px-0.5 pt-0.5">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Breakdown:
-                </span>
+              <div className="px-0.5 pt-3">
+
               </div>
 
               {/* Grid: Row 1 = Offshore, Onsite; Row 2 = Nearshore, (Unknown if any) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                
+              <div className="grid grid-cols-2 gap-2 mt-3">
+
                 {/* 1. Onsite Card */}
                 <button
                   type="button"
                   onClick={() => onOpenModal({ wbsType: 'Onsite' })}
-                  className="flex flex-col justify-between p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-sky-50/30 hover:border-sky-300 transition-all text-left shadow-2xs group cursor-pointer"
-                  title="Filter by Onsite staff"
+                  className="onsite-card"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#0284c7' }} />
@@ -113,7 +112,7 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                 <button
                   type="button"
                   onClick={() => onOpenModal({ wbsType: 'Nearshore' })}
-                  className="flex flex-col justify-between p-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-emerald-50/30 hover:border-emerald-300 transition-all text-left shadow-2xs group cursor-pointer"
+                  className="nearshore-card"
                   title="Filter by Nearshore staff"
                 >
                   <div className="flex items-center gap-1.5">
@@ -133,53 +132,117 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                 </button>
 
                 {/* 3. Offshore Card (includes nested Billable / Unbillable counts) */}
-                <div className="flex flex-col justify-between p-2.5 rounded-xl border border-slate-200/80 bg-white shadow-2xs">
+                {/* Offshore Card */}
+                <div className="offshore-card">
                   <div
-                    onClick={() => onOpenModal({ wbsType: 'Offshore' })}
-                    className="flex items-center justify-between cursor-pointer group pb-2 border-b border-slate-100"
-                    title="Filter by all Offshore staff"
+                    className="offshore-header"
+                    onClick={() => setIsOffshoreExpanded((prev) => !prev)}
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: '#7c3aed' }} />
-                      <span className="text-[12px] font-semibold text-slate-700 group-hover:text-purple-900 transition-colors">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ background: '#7c3aed' }}
+                      />
+                      <span className="text-[12px] font-semibold text-slate-700">
                         Offshore
                       </span>
                     </div>
-                    <span className="text-base font-bold tracking-tight text-slate-900 group-hover:text-purple-950 font-mono">
-                      {offshoreTotal.toLocaleString()}
-                    </span>
+
+                    <div className="offshore-value-wrap">
+                      <strong>{offshoreTotal.toLocaleString()}</strong>
+
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-200 ${isOffshoreExpanded ? 'rotate-0' : '-rotate-90'
+                          }`}
+                      />
+                    </div>
                   </div>
 
-                  {/* Partitioned Sub-row: Billable vs Unbillable */}
-                  <div className="grid grid-cols-2 gap-1.5 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => onOpenModal({ wbsType: 'Offshore', billingClassification: 'Billable' })}
-                      className="flex flex-col p-1.5 rounded-lg border border-slate-100 bg-slate-50/70 hover:bg-purple-50/50 hover:border-purple-200 transition-all text-left cursor-pointer group"
-                      title="Filter by Billable Offshore staff"
-                    >
-                      <span className="text-[10px] font-semibold text-slate-500 group-hover:text-purple-800">
-                        Billable
-                      </span>
-                      <span className="text-sm font-bold text-slate-900 group-hover:text-purple-950 font-mono mt-0.5">
-                        {billableCount.toLocaleString()}
-                      </span>
-                    </button>
+                  {isOffshoreExpanded && (
+                    <div className="offshore-kpi-row">
 
-                    <button
-                      type="button"
-                      onClick={() => onOpenModal({ wbsType: 'Offshore', billingClassification: 'Unbillable' })}
-                      className="flex flex-col p-1.5 rounded-lg border border-slate-100 bg-slate-50/70 hover:bg-amber-50/50 hover:border-amber-200 transition-all text-left cursor-pointer group"
-                      title="Filter by Unbillable Offshore staff"
-                    >
-                      <span className="text-[10px] font-semibold text-slate-500 group-hover:text-amber-800">
-                        Unbillable
-                      </span>
-                      <span className="text-sm font-bold text-slate-900 group-hover:text-amber-950 font-mono mt-0.5">
-                        {unbillableCount.toLocaleString()}
-                      </span>
-                    </button>
-                  </div>
+                      <div className="offshore-billable-section">
+
+                        <div
+                          className="allocation-header offshore-billable-header"
+                          onClick={() => setIsBillableExpanded((prev) => !prev)}
+                        >
+                          <div className="allocation-header-copy">
+                            <span className="allocation-icon purple">
+                              <MapPin className="w-4 h-4" />
+                            </span>
+
+                            <div>
+                              <p className="allocation-label">Billable</p>
+                            </div>
+                          </div>
+
+                          <div className="allocation-value-wrap">
+                            <strong className="allocation-value">
+                              {billableCount.toLocaleString()}
+                            </strong>
+
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform duration-200 ${isBillableExpanded ? 'rotate-0' : '-rotate-90'
+                                }`}
+                            />
+                          </div>
+                        </div>
+
+                        {isBillableExpanded && (
+                          <div className="offshore-location-container">
+                            <div className="offshore-location-grid">
+                              {psaList.map((item) => (
+                                <button
+                                  key={item.psa}
+                                  type="button"
+                                  className="offshore-location-card"
+                                  onClick={() =>
+                                    onOpenModal({
+                                      wbsType: 'Offshore',
+                                      billingClassification: 'Billable',
+                                      location: item.psa,
+                                    })
+                                  }
+                                >
+                                  <span
+                                    className="offshore-location-name"
+                                    title={(item.psa || 'Unknown').split('(')[0].trim()}
+                                  >
+                                    <span className="offshore-dot" />
+                                    {(item.psa || 'Unknown').split('(')[0].trim()}
+                                  </span>
+                                  <strong>{item.count.toLocaleString()}</strong>
+
+                                  <small>Staff</small>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="allocation-header offshore-unbillable-header">
+                        <div className="allocation-header-copy">
+                          <span className="allocation-icon amber">
+                            <UserMinus className="w-4 h-4" />
+                          </span>
+
+                          <div>
+                            <p className="allocation-label">Unbillable</p>
+                          </div>
+                        </div>
+
+                        <div className="allocation-value-wrap">
+                          <strong className="allocation-value">
+                            {unbillableCount.toLocaleString()}
+                          </strong>
+
+                          <span className="offshore-chevron-placeholder" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 4. Optional Unknown Card (only if unknownCount > 0) */}
@@ -209,64 +272,7 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
               </div>
 
               {/* Billable Offshore by PSA Section */}
-              <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-2xs">
-                {/* Section Header */}
-                <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 bg-slate-50/50">
-                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-purple-600" />
-                    Billable Offshore — PSA
-                  </span>
-                  <span className="text-[11px] font-semibold text-slate-500 font-mono">
-                    {billableCount.toLocaleString()} staff
-                  </span>
-                </div>
 
-                {/* PSA Row List */}
-                {psaList.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-3 text-center italic">
-                    No billable Offshore PSA data.
-                  </p>
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {displayedPsa.map((item) => (
-                      <button
-                        key={item.psa}
-                        type="button"
-                        onClick={() =>
-                          onOpenModal({
-                            wbsType: 'Offshore',
-                            billingClassification: 'Billable',
-                            location: item.psa
-                          })
-                        }
-                        className="w-full flex items-center justify-between px-3.5 py-2 hover:bg-purple-50/50 transition-colors text-left cursor-pointer group"
-                        title={`Filter by Billable Offshore at ${item.psa || 'Unknown'}`}
-                      >
-                        <span className="text-xs font-medium text-slate-700 group-hover:text-purple-900 truncate">
-                          {item.psa || 'Unknown'}
-                        </span>
-                        <span className="text-xs font-bold text-slate-900 group-hover:text-purple-950 font-mono tabular-nums ml-2">
-                          {item.count.toLocaleString()}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Show All / Collapse Footer */}
-                {psaList.length > 5 && (
-                  <div className="p-2 border-t border-slate-100 bg-slate-50/30">
-                    <button
-                      type="button"
-                      onClick={() => setShowAllPsa((prev) => !prev)}
-                      className="w-full flex items-center justify-center gap-1 text-xs font-semibold text-purple-700 hover:text-purple-900 transition-colors cursor-pointer py-1"
-                    >
-                      <span>{showAllPsa ? 'Show fewer locations' : `View all locations (${psaList.length})`}</span>
-                      <ChevronRight className={"w-3.5 h-3.5 transition-transform " + (showAllPsa ? "-rotate-90" : "rotate-90")} />
-                    </button>
-                  </div>
-                )}
-              </div>
             </>
           )}
         </div>

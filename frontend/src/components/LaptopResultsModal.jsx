@@ -6,7 +6,8 @@ import {
   ChevronUp,
   ChevronDown,
   Laptop,
-  Clock
+  Clock,
+  MapPin
 } from 'lucide-react';
 import { api } from '../services/api';
 import ExcelColumnFilter from './ExcelColumnFilter';
@@ -195,25 +196,25 @@ export default function LaptopResultsModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+        className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-[96vw] max-h-[92vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
-              <Laptop className="w-4 h-4" />
+        <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950 text-white flex items-center justify-between border-b border-white/10 shrink-0">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-blue-100 shadow-inner">
+              <Laptop className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center space-x-2.5">
-                <h2 className="text-sm font-bold text-white tracking-tight">
+              <div className="flex items-center flex-wrap gap-2.5">
+                <h2 className="text-base font-semibold text-white tracking-tight">
                   {title || 'Filtered Laptops'}
                 </h2>
-                <span className="px-2 py-0.5 text-xs font-mono font-semibold bg-slate-800 text-slate-200 rounded border border-slate-700">
+                <span className="px-2.5 py-1 text-xs font-semibold tabular-nums bg-blue-400/15 text-blue-100 rounded-full border border-blue-200/25 shadow-sm">
                   {totalCount.toLocaleString()} {totalCount === 1 ? 'laptop' : 'laptops'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-300/80 mt-1">
                 {subtitle || 'Filtered asset results • Click any row to view lifecycle audit'}
               </p>
             </div>
@@ -223,7 +224,7 @@ export default function LaptopResultsModal({
             <button
               type="button"
               onClick={handleExport}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition-colors cursor-pointer"
+              className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-white/10 hover:bg-white/15 text-white text-xs font-medium rounded-lg border border-white/15 transition-all duration-200 cursor-pointer"
               title="Export this filtered view to Excel"
             >
               <Download className="w-3.5 h-3.5" />
@@ -232,7 +233,7 @@ export default function LaptopResultsModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               title="Close modal (Esc)"
             >
               <X className="w-5 h-5" />
@@ -241,36 +242,36 @@ export default function LaptopResultsModal({
         </div>
 
         {/* Toolbar: Debounced Search & Pagination Size */}
-        <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
+        <div className="px-6 py-3 bg-slate-50/80 border-b border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
           <div className="relative flex-1 max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <Search className="w-3.5 h-3.5" />
+              <Search className="w-4 h-4" />
             </div>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search serial, user, SAP ID, location, FBR, SPOC..."
-              className="w-full pl-9 pr-3 h-8.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-500 focus:border-slate-500 text-slate-800 placeholder-slate-400"
+              className="w-full pl-9 pr-3 h-9 text-xs bg-white border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-slate-800 placeholder-slate-400 transition-shadow"
             />
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end space-x-3 text-xs text-slate-500">
+          <div className="flex items-center justify-between sm:justify-end gap-4 text-xs text-slate-500">
             <span>
               Showing <b className="text-slate-800">{totalCount > 0 ? (page - 1) * pageSize + 1 : 0}</b> to{' '}
               <b className="text-slate-800">{Math.min(page * pageSize, totalCount)}</b> of{' '}
               <b className="text-slate-800">{totalCount.toLocaleString()}</b>
             </span>
 
-            <div className="flex items-center space-x-1.5">
-              <span>Per page:</span>
+            <div className="flex items-center gap-2">
+              <span>Rows per page</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setPage(1);
                 }}
-                className="px-2 py-1 bg-white border border-slate-300 rounded text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
+                className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
               >
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -282,50 +283,48 @@ export default function LaptopResultsModal({
 
         {/* Progress Bar */}
         {loading && (
-          <div className="w-full h-0.5 bg-blue-100 overflow-hidden">
-            <div className="w-full h-full bg-blue-600 animate-pulse" />
+          <div className="w-full h-1 bg-blue-50 overflow-hidden">
+            <div className="w-full h-full bg-gradient-to-r from-blue-400 via-blue-600 to-cyan-400 animate-pulse" />
           </div>
         )}
 
         {/* Table Content with Header Filtering */}
-        <div className="flex-1 overflow-auto bg-white min-h-[320px]">
-          <table className="w-full text-left text-xs text-slate-600 divide-y divide-slate-200">
-            <thead className="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider text-[11px] sticky top-0 z-10">
+        <div className="flex-1 overflow-auto bg-slate-50/60 min-h-[320px] px-3 pb-2">
+          <table className="w-full border-separate border-spacing-x-0 border-spacing-y-2 text-left text-xs text-slate-600">
+            <thead className="sticky top-0 z-10 bg-slate-100/90 text-slate-600 font-semibold uppercase tracking-wider text-[10px] backdrop-blur-md">
               <tr>
-                {/* Serial No */}
-                <th className="py-2.5 px-3 hover:bg-slate-200 transition-colors whitespace-nowrap">
-                  <div className="flex items-center justify-between">
-                    <span onClick={() => handleSort('serialnumber')} className="cursor-pointer flex-1">
-                      Serial No. {getSortIcon('serialnumber')}
-                    </span>
-                    <ExcelColumnFilter
-                      title="Serial No."
-                      columnKey="serialNumber"
-                      selectedValues={columnFilters?.serialNumber}
-                      options={uniqueSerials}
-                      onApply={(vals) => handleColumnFilterChange('serialNumber', vals)}
-                    />
-                  </div>
-                </th>
-
-                {/* FBR Request */}
-                <th className="py-2.5 px-3 hover:bg-slate-200 transition-colors whitespace-nowrap">
-                  <div className="flex items-center justify-between">
-                    <span onClick={() => handleSort('fbrrequest')} className="cursor-pointer flex-1">
-                      FBR Request {getSortIcon('fbrrequest')}
-                    </span>
-                    <ExcelColumnFilter
-                      title="FBR Request"
-                      columnKey="fbrRequest"
-                      selectedValues={columnFilters?.fbrRequest}
-                      options={uniqueFbrs}
-                      onApply={(vals) => handleColumnFilterChange('fbrRequest', vals)}
-                    />
+                {/* Asset identity */}
+                <th className="py-3 px-4 rounded-l-xl border-y border-l border-slate-200/80 bg-slate-100/90 min-w-[190px]">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span onClick={() => handleSort('serialnumber')} className="cursor-pointer flex-1">
+                        Serial No. {getSortIcon('serialnumber')}
+                      </span>
+                      <ExcelColumnFilter
+                        title="Serial No."
+                        columnKey="serialNumber"
+                        selectedValues={columnFilters?.serialNumber}
+                        options={uniqueSerials}
+                        onApply={(vals) => handleColumnFilterChange('serialNumber', vals)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 border-t border-slate-200/80 pt-2">
+                      <span onClick={() => handleSort('fbrrequest')} className="cursor-pointer flex-1">
+                        FBR Request {getSortIcon('fbrrequest')}
+                      </span>
+                      <ExcelColumnFilter
+                        title="FBR Request"
+                        columnKey="fbrRequest"
+                        selectedValues={columnFilters?.fbrRequest}
+                        options={uniqueFbrs}
+                        onApply={(vals) => handleColumnFilterChange('fbrRequest', vals)}
+                      />
+                    </div>
                   </div>
                 </th>
 
                 {/* Location */}
-                <th className="py-2.5 px-3 hover:bg-slate-200 transition-colors whitespace-nowrap">
+                <th className="py-3 px-3 border-y border-slate-200/80 bg-slate-100/90 whitespace-nowrap">
                   <div className="flex items-center justify-between">
                     <span onClick={() => handleSort('location')} className="cursor-pointer flex-1">
                       Location {getSortIcon('location')}
@@ -341,7 +340,7 @@ export default function LaptopResultsModal({
                 </th>
 
                 {/* Status */}
-                <th className="py-2.5 px-3 hover:bg-slate-200 transition-colors whitespace-nowrap">
+                <th className="py-3 px-3 border-y border-slate-200/80 bg-slate-100/90 whitespace-nowrap">
                   <div className="flex items-center justify-between">
                     <span onClick={() => handleSort('status')} className="cursor-pointer flex-1">
                       Status {getSortIcon('status')}
@@ -356,8 +355,40 @@ export default function LaptopResultsModal({
                   </div>
                 </th>
 
+                {/* User details */}
+                <th className="py-3 px-3 border-y border-slate-200/80 bg-slate-100/90 min-w-[170px]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span onClick={() => handleSort('username')} className="cursor-pointer flex-1">
+                          User Name {getSortIcon('username')}
+                        </span>
+                        <ExcelColumnFilter
+                          title="User Name"
+                          columnKey="userName"
+                          selectedValues={columnFilters?.userName}
+                          options={uniqueUsers}
+                          onApply={(vals) => handleColumnFilterChange('userName', vals)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-2 border-t border-slate-200/80 pt-2">
+                        <span onClick={() => handleSort('sapid')} className="cursor-pointer flex-1">
+                          SAP ID {getSortIcon('sapid')}
+                        </span>
+                        <ExcelColumnFilter
+                          title="SAP ID"
+                          columnKey="sapId"
+                          selectedValues={columnFilters?.sapId}
+                          options={uniqueSapIds}
+                          onApply={(vals) => handleColumnFilterChange('sapId', vals)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </th>
+
                 {/* IT SPOC */}
-                <th className="py-2.5 px-3 hover:bg-slate-200 transition-colors whitespace-nowrap">
+                <th className="py-3 px-3 border-y border-slate-200/80 bg-slate-100/90 whitespace-nowrap">
                   <div className="flex items-center justify-between">
                     <span onClick={() => handleSort('itspoc')} className="cursor-pointer flex-1">
                       IT SPOC {getSortIcon('itspoc')}
@@ -372,40 +403,8 @@ export default function LaptopResultsModal({
                   </div>
                 </th>
 
-                {/* SAP ID */}
-                <th className="py-2.5 px-3 hover:bg-slate-200 transition-colors whitespace-nowrap">
-                  <div className="flex items-center justify-between">
-                    <span onClick={() => handleSort('sapid')} className="cursor-pointer flex-1">
-                      SAP ID {getSortIcon('sapid')}
-                    </span>
-                    <ExcelColumnFilter
-                      title="SAP ID"
-                      columnKey="sapId"
-                      selectedValues={columnFilters?.sapId}
-                      options={uniqueSapIds}
-                      onApply={(vals) => handleColumnFilterChange('sapId', vals)}
-                    />
-                  </div>
-                </th>
-
-                {/* User Name */}
-                <th className="py-2.5 px-3 hover:bg-slate-200 transition-colors whitespace-nowrap">
-                  <div className="flex items-center justify-between">
-                    <span onClick={() => handleSort('username')} className="cursor-pointer flex-1">
-                      User Name {getSortIcon('username')}
-                    </span>
-                    <ExcelColumnFilter
-                      title="User Name"
-                      columnKey="userName"
-                      selectedValues={columnFilters?.userName}
-                      options={uniqueUsers}
-                      onApply={(vals) => handleColumnFilterChange('userName', vals)}
-                    />
-                  </div>
-                </th>
-
                 {/* RAS Status */}
-                <th className="py-2.5 px-3 text-center hover:bg-slate-200 transition-colors whitespace-nowrap">
+                <th className="py-3 px-3 text-center border-y border-slate-200/80 bg-slate-100/90 whitespace-nowrap">
                   <div className="flex items-center justify-center space-x-1">
                     <span onClick={() => handleSort('rasstatus')} className="cursor-pointer">
                       RAS Status {getSortIcon('rasstatus')}
@@ -423,7 +422,7 @@ export default function LaptopResultsModal({
                 {/* Start Date */}
                 <th
                   onClick={() => handleSort('startdate')}
-                  className="py-2.5 px-3 cursor-pointer hover:bg-slate-200 transition-colors whitespace-nowrap"
+                  className="py-3 px-3 cursor-pointer border-y border-slate-200/80 bg-slate-100/90 whitespace-nowrap hover:bg-slate-200/90 transition-colors"
                 >
                   Start Date {getSortIcon('startdate')}
                 </th>
@@ -431,7 +430,7 @@ export default function LaptopResultsModal({
                 {/* End Date */}
                 <th
                   onClick={() => handleSort('enddate')}
-                  className="py-2.5 px-3 cursor-pointer hover:bg-slate-200 transition-colors whitespace-nowrap"
+                  className="py-3 px-3 cursor-pointer border-y border-slate-200/80 bg-slate-100/90 whitespace-nowrap hover:bg-slate-200/90 transition-colors"
                 >
                   End Date {getSortIcon('enddate')}
                 </th>
@@ -439,7 +438,7 @@ export default function LaptopResultsModal({
                 {/* Last Working Day */}
                 <th
                   onClick={() => handleSort('lastworkingday')}
-                  className="py-2.5 px-3 cursor-pointer hover:bg-slate-200 transition-colors whitespace-nowrap"
+                  className="py-3 px-3 cursor-pointer border-y border-slate-200/80 bg-slate-100/90 whitespace-nowrap hover:bg-slate-200/90 transition-colors"
                 >
                   Last Working Day {getSortIcon('lastworkingday')}
                 </th>
@@ -447,29 +446,37 @@ export default function LaptopResultsModal({
                 {/* In Stock Since */}
                 <th
                   onClick={() => handleSort('instocksince')}
-                  className="py-2.5 px-3 cursor-pointer hover:bg-slate-200 transition-colors whitespace-nowrap"
+                  className="py-3 px-3 cursor-pointer border-y border-slate-200/80 bg-slate-100/90 whitespace-nowrap hover:bg-slate-200/90 transition-colors"
                 >
                   In Stock Since {getSortIcon('instocksince')}
                 </th>
 
                 {/* Ageing Days */}
-                <th className="py-2.5 px-3 text-center whitespace-nowrap">Ageing Days</th>
+                <th className="py-3 px-3 rounded-r-xl border-y border-r border-slate-200/80 bg-slate-100/90 text-center whitespace-nowrap">Ageing Days</th>
               </tr>
             </thead>
 
-            <tbody className={`divide-y divide-slate-100 transition-opacity duration-150 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+            <tbody className={`transition-opacity duration-150 ${loading ? 'opacity-60' : 'opacity-100'}`}>
               {items.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan={13} className="py-12 text-center text-slate-400">
-                    No records found for this category and filter selection.
+                  <td colSpan={11} className="py-16 px-6">
+                    <div className="mx-auto flex max-w-sm flex-col items-center text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-500">
+                        <Laptop className="h-7 w-7" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-800">No assets found</p>
+                      <p className="mt-1.5 text-xs leading-5 text-slate-500">
+                        No laptops match this category and filter selection. Try adjusting your search or filters.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : items.length === 0 && loading ? (
                 // Clean skeleton rows
                 [...Array(5)].map((_, i) => (
                   <tr key={`modal-skel-${i}`} className="animate-pulse">
-                    <td colSpan={13} className="py-3 px-3">
-                      <div className="h-4 bg-slate-100 rounded w-full" />
+                    <td colSpan={11} className="py-1 px-1">
+                      <div className="h-12 bg-white border border-slate-100 shadow-sm rounded-xl animate-pulse" />
                     </td>
                   </tr>
                 ))
@@ -486,51 +493,68 @@ export default function LaptopResultsModal({
                     <tr
                       key={lap.serialNumber}
                       onClick={() => onSelectLaptop && onSelectLaptop(lap)}
-                      className={`hover:bg-blue-50/60 cursor-pointer transition-colors group ${
-                        lwdRisk ? 'bg-amber-50/40' : ''
-                      }`}
+                      className="group cursor-pointer transition-all duration-200 hover:-translate-y-px hover:drop-shadow-md"
                     >
-                      <td className="py-2 px-3 font-semibold text-slate-900 whitespace-nowrap font-mono text-xs group-hover:text-blue-600 transition-colors">
-                        {lap.serialNumber}
+                      <td className={`py-3 px-4 align-middle rounded-l-xl border-y border-l-2 border-y-slate-200/80 border-r-0 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100 ${
+                        isLost
+                          ? 'border-l-rose-500'
+                          : lwdRisk
+                          ? 'border-l-amber-400'
+                          : isAllocated
+                          ? 'border-l-blue-500'
+                          : 'border-l-emerald-500'
+                      }`}>
+                        <div className="font-mono text-[13px] font-bold tracking-tight text-slate-900 group-hover:text-blue-700 transition-colors">
+                          {lap.serialNumber}
+                        </div>
+                        <div className="mt-1 text-[10px] font-medium text-slate-400">
+                          FBR <span className="font-mono text-slate-500">{lap.fbrRequest || '—'}</span>
+                        </div>
                       </td>
-                      <td className="py-2 px-3 text-slate-700 whitespace-nowrap font-mono text-[11px]">
-                        {lap.fbrRequest || '—'}
+                      <td className="py-3 px-3 align-middle border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                          <MapPin className="h-3 w-3 text-slate-400" />
+                          {lap.location || '—'}
+                        </span>
                       </td>
-                      <td className="py-2 px-3 text-slate-700 whitespace-nowrap">
-                        {lap.location || '—'}
-                      </td>
-                      <td className="py-2 px-3 whitespace-nowrap">
+                      <td className="py-3 px-3 align-middle border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
                             isAllocated
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           }`}
                         >
+                          <span className={`h-1.5 w-1.5 rounded-full ${isAllocated ? 'bg-blue-500' : 'bg-emerald-500'}`} />
                           {isAllocated ? 'Allocated' : 'In Stock'}
                         </span>
                       </td>
-                      <td className="py-2 px-3 text-slate-700 whitespace-nowrap font-medium">
-                        {lap.itSpoc || lap.itspoc || lap.ITSPOC || '—'}
+                      <td className="py-3 px-3 align-middle border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
+                        <div className="font-medium text-slate-800">{lap.userName || '—'}</div>
+                        <div className="mt-1 font-mono text-[10px] text-slate-400">
+                          SAP ID <span className="text-slate-500">{lap.sapId || '—'}</span>
+                        </div>
                       </td>
-                      <td className="py-2 px-3 text-slate-700 whitespace-nowrap font-mono text-[11px]">
-                        {lap.sapId || '—'}
+                      <td className="py-3 px-3 align-middle whitespace-nowrap border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
+                        <span className="font-medium text-slate-700">
+                          {lap.itSpoc || lap.itspoc || lap.ITSPOC || '—'}
+                        </span>
                       </td>
-                      <td className="py-2 px-3 text-slate-800 whitespace-nowrap font-medium">
-                        {lap.userName || '—'}
-                      </td>
-                      <td className="py-2 px-3 text-center whitespace-nowrap">
+                      <td className="py-3 px-3 text-center align-middle whitespace-nowrap border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
                             isRasActive
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                               : isLost
-                              ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                              ? 'bg-rose-50 text-rose-800 border border-rose-200'
                               : isNotInUhg
-                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
                               : 'bg-slate-100 text-slate-600 border border-slate-200'
                           }`}
                         >
+                          <span className={`h-1.5 w-1.5 rounded-full ${
+                            isRasActive ? 'bg-emerald-500' : isLost ? 'bg-rose-500' : isNotInUhg ? 'bg-amber-500' : 'bg-slate-400'
+                          }`} />
                           {isLost
                             ? 'Lost'
                             : isNotInUhg
@@ -540,16 +564,16 @@ export default function LaptopResultsModal({
                             : lap.rasStatus || '—'}
                         </span>
                       </td>
-                      <td className="py-2 px-3 text-slate-700 whitespace-nowrap font-mono text-[11px]">
+                      <td className="py-3 px-3 align-middle text-slate-500 whitespace-nowrap font-mono text-[11px] border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
                         {formatDate(lap.startDate)}
                       </td>
-                      <td className="py-2 px-3 text-slate-700 whitespace-nowrap font-mono text-[11px]">
+                      <td className="py-3 px-3 align-middle text-slate-500 whitespace-nowrap font-mono text-[11px] border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
                         {formatDate(lap.endDate)}
                       </td>
-                      <td className="py-2 px-3 text-slate-700 whitespace-nowrap font-mono text-[11px]">
+                      <td className="py-3 px-3 align-middle text-slate-500 whitespace-nowrap font-mono text-[11px] border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
                         {lwdRisk ? (
                           <span
-                            className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-900 border border-amber-200 shadow-sm"
                             title="LWD approaching within 15 days"
                           >
                             <Clock className="w-3 h-3 text-amber-700" />
@@ -559,10 +583,10 @@ export default function LaptopResultsModal({
                           <span>{formatDate(lap.lastWorkingDay)}</span>
                         )}
                       </td>
-                      <td className="py-2 px-3 text-slate-700 whitespace-nowrap font-mono text-[11px]">
+                      <td className="py-3 px-3 align-middle text-slate-500 whitespace-nowrap font-mono text-[11px] border-y border-y-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100">
                         {formatDate(lap.inStockSince)}
                       </td>
-                      <td className="py-2 px-3 text-center whitespace-nowrap font-mono text-[11px]">
+                      <td className="py-3 px-3 align-middle text-center whitespace-nowrap font-mono text-[11px] rounded-r-xl border-y border-r border-y-slate-200/80 border-r-slate-200/80 bg-white shadow-sm transition-all duration-200 group-hover:bg-blue-50/70 group-hover:border-y-blue-100 group-hover:border-r-blue-100">
                         {lap.ageingDays !== null && lap.ageingDays !== undefined ? (
                           <span className={lap.ageingDays > 90 ? 'text-amber-700 font-bold' : 'text-slate-700'}>
                             {lap.ageingDays} d
@@ -580,7 +604,7 @@ export default function LaptopResultsModal({
         </div>
 
         {/* Pagination Footer */}
-        <div className="px-5 py-3 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 shrink-0">
+        <div className="px-6 py-3.5 border-t border-slate-200/80 bg-slate-50/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 shrink-0">
           <div>
             <span>Page </span>
             <span className="font-semibold text-slate-800">{page}</span>
@@ -592,28 +616,28 @@ export default function LaptopResultsModal({
             <button
               onClick={() => setPage(1)}
               disabled={page <= 1}
-              className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white shadow-sm hover:border-blue-200 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               « First
             </button>
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white shadow-sm hover:border-blue-200 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               ‹ Prev
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white shadow-sm hover:border-blue-200 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               Next ›
             </button>
             <button
               onClick={() => setPage(totalPages)}
               disabled={page >= totalPages}
-              className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white shadow-sm hover:border-blue-200 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               Last »
             </button>
