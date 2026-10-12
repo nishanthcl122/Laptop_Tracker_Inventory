@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using LaptopTracking.Api.Models.DTOs;
 using LaptopTracking.Api.Models.Entities;
+using LaptopTracking.Api.Models;
 
 namespace LaptopTracking.Api.Services;
 
@@ -17,6 +18,21 @@ public class ExcelParseResult
 
 public class ExcelParserService
 {
+    private static readonly IReadOnlyDictionary<string, string[]> ColumnAliases = new Dictionary<string, string[]>(StringComparer.Ordinal)
+    {
+        ["Serial Number"] = ["Serial No.", "Serial No", "Laptop Serial Number", "Serial Number", "SerialNumber", "Serial"],
+        ["FBR Request"] = ["FBR Request", "FBRRequest", "Laptop FBR ID", "Laptop FBR Number", "FBR ID", "FBR Number", "FBR"],
+        ["Location"] = ["Location", "City", "Office Location"],
+        ["Status"] = ["Status", "Allocation Status", "AllocationStatus"],
+        ["IT SPOC"] = ["IT SPOC", "ITSPOC", "IT_SPOC", "SPOC"],
+        ["SAP ID"] = ["SAP ID", "Employee SAP ID", "SAPID", "SAP"],
+        ["User Name"] = ["User Name", "UserName", "Employee Name", "User", "Employee", "Name", "Emp Name"],
+        ["RAS Status"] = ["RAS Status", "RAS", "RASStatus"],
+        ["Start Date"] = ["Start Date", "StartDate", "Allocation Start Date", "Assignment Date"],
+        ["End Date"] = ["End Date", "EndDate", "Allocation End Date"],
+        ["Last Working Day"] = ["Last Working Day", "LWD", "LastWorkingDay"]
+    };
+
     public ExcelParseResult ParseAndValidate(Stream stream, int batchId)
     {
         var result = new ExcelParseResult();
@@ -48,26 +64,82 @@ public class ExcelParserService
 
         // Map header column names to indexes
         var colMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var duplicateHeaders = new List<string>();
+        var normalizedHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var cell in headerRow.CellsUsed())
         {
             var headerText = cell.GetString().Trim();
             if (!string.IsNullOrEmpty(headerText))
             {
-                colMap[headerText] = cell.Address.ColumnNumber;
+                if (!colMap.TryAdd(headerText, cell.Address.ColumnNumber) || !normalizedHeaders.Add(NormalizeHeader(headerText)))
+                {
+                    duplicateHeaders.Add(headerText);
+                }
             }
         }
 
-        int serialCol = FindColumn(colMap, "Serial No.", "Serial No", "Laptop Serial Number", "Serial Number", "SerialNumber", "Serial");
-        int fbrCol = FindColumn(colMap, "FBR Request", "FBRRequest", "Laptop FBR ID", "Laptop FBR Number", "FBR ID", "FBR Number", "FBR");
-        int locationCol = FindColumn(colMap, "Location", "City", "Office Location");
-        int statusCol = FindColumn(colMap, "Status", "Allocation Status", "AllocationStatus");
-        int itSpocCol = FindColumn(colMap, "IT SPOC", "ITSPOC", "IT_SPOC", "SPOC");
-        int sapCol = FindColumn(colMap, "SAP ID", "Employee SAP ID", "SAPID", "SAP");
-        int userCol = FindColumn(colMap, "User Name", "UserName", "Employee Name", "User", "Employee", "Name", "Emp Name");
-        int rasCol = FindColumn(colMap, "RAS Status", "RAS", "RASStatus");
-        int startCol = FindColumn(colMap, "Start Date", "StartDate", "Allocation Start Date", "Assignment Date");
-        int endCol = FindColumn(colMap, "End Date", "EndDate", "Allocation End Date");
-        int lwdCol = FindColumn(colMap, "Last Working Day", "LWD", "LastWorkingDay");
+        if (duplicateHeaders.Count > 0)
+        {
+            result.Errors.Add(new ValidationErrorDto
+            {
+                Row = headerRow.RowNumber(),
+                Field = "Header",
+                Message = $"Duplicate column headers are not allowed: {string.Join(", ", duplicateHeaders.Distinct(StringComparer.OrdinalIgnoreCase))}."
+            });
+            return result;
+        }
+
+        int serialCol = FindColumn(colMap, ColumnAliases["Serial Number"], out var serialMatches);
+        int fbrCol = FindColumn(colMap, ColumnAliases["FBR Request"], out var fbrMatches);
+        int locationCol = FindColumn(colMap, ColumnAliases["Location"], out var locationMatches);
+        int statusCol = FindColumn(colMap, ColumnAliases["Status"], out var statusMatches);
+        int itSpocCol = FindColumn(colMap, ColumnAliases["IT SPOC"], out var itSpocMatches);
+        int sapCol = FindColumn(colMap, ColumnAliases["SAP ID"], out var sapMatches);
+        int userCol = FindColumn(colMap, ColumnAliases["User Name"], out var userMatches);
+        int rasCol = FindColumn(colMap, ColumnAliases["RAS Status"], out var rasMatches);
+        int startCol = FindColumn(colMap, ColumnAliases["Start Date"], out var startDateMatches);
+        int endCol = FindColumn(colMap, ColumnAliases["End Date"], out var endDateMatches);
+        int lwdCol = FindColumn(colMap, ColumnAliases["Last Working Day"], out var lwdMatches);
+
+        var ambiguousColumns = new (string Field, List<string> Matches)[]
+        {
+            ("Serial Number", serialMatches), ("FBR Request", fbrMatches), ("Location", locationMatches),
+            ("Status", statusMatches), ("IT SPOC", itSpocMatches), ("SAP ID", sapMatches),
+            ("User Name", userMatches), ("RAS Status", rasMatches), ("Start Date", startDateMatches),
+            ("End Date", endDateMatches), ("Last Working Day", lwdMatches)
+        };
+        foreach (var (field, matches) in ambiguousColumns.Where(x => x.Matches.Count > 1))
+        {
+            result.Errors.Add(new ValidationErrorDto
+            {
+                Row = headerRow.RowNumber(),
+                Field = "Header",
+                Message = $"Multiple columns match '{field}': {string.Join(", ", matches)}. Keep only one matching header."
+            });
+        }
+
+        var selectedColumns = new (string Field, int Column)[]
+        {
+            ("Serial Number", serialCol), ("FBR Request", fbrCol), ("Location", locationCol),
+            ("Status", statusCol), ("IT SPOC", itSpocCol), ("SAP ID", sapCol),
+            ("User Name", userCol), ("RAS Status", rasCol), ("Start Date", startCol),
+            ("End Date", endCol), ("Last Working Day", lwdCol)
+        }.Where(mapping => mapping.Column > 0);
+        var reusedColumns = selectedColumns
+            .GroupBy(mapping => mapping.Column)
+            .Where(group => group.Count() > 1)
+            .ToList();
+        foreach (var group in reusedColumns)
+        {
+            string header = colMap.First(pair => pair.Value == group.Key).Key;
+            result.Errors.Add(new ValidationErrorDto
+            {
+                Row = headerRow.RowNumber(),
+                Field = "Header",
+                Message = $"Column '{header}' matches multiple fields: {string.Join(", ", group.Select(mapping => mapping.Field))}."
+            });
+        }
+        if (ambiguousColumns.Any(x => x.Matches.Count > 1) || reusedColumns.Count > 0) return result;
 
         if (serialCol == -1)
         {
@@ -122,7 +194,7 @@ public class ExcelParserService
 
             string rawStatus = GetCellString(row, statusCol);
             string status = NormalizeStatus(rawStatus);
-            if (status == "INVALID")
+            if (status == ImportRowValidationStatuses.Invalid)
             {
                 result.Errors.Add(new ValidationErrorDto
                 {
@@ -162,7 +234,7 @@ public class ExcelParserService
                 StartDate = startDate,
                 EndDate = endDate,
                 LastWorkingDay = lwd,
-                ValidationStatus = "VALID"
+                ValidationStatus = ImportRowValidationStatuses.Valid
             };
 
             result.ValidRows.Add(batchRow);
@@ -171,28 +243,20 @@ public class ExcelParserService
         return result;
     }
 
-    private static int FindColumn(Dictionary<string, int> map, params string[] candidates)
+    private static int FindColumn(Dictionary<string, int> map, string[] candidates, out List<string> matchingHeaders)
     {
-        foreach (var c in candidates)
-        {
-            if (map.TryGetValue(c, out int col)) return col;
-        }
+        var normalizedCandidates = candidates
+            .Select(NormalizeHeader)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var matches = map
+            .Where(pair => normalizedCandidates.Contains(NormalizeHeader(pair.Key)))
+            .ToList();
 
-        // Fuzzy match ignoring non-alphanumeric
-        foreach (var kvp in map)
-        {
-            string cleanKvp = Regex.Replace(kvp.Key, @"[^a-zA-Z0-9]", "");
-            foreach (var c in candidates)
-            {
-                string cleanC = Regex.Replace(c, @"[^a-zA-Z0-9]", "");
-                if (cleanKvp.Equals(cleanC, StringComparison.OrdinalIgnoreCase))
-                {
-                    return kvp.Value;
-                }
-            }
-        }
-        return -1;
+        matchingHeaders = matches.Select(match => match.Key).ToList();
+        return matches.Count == 1 ? matches[0].Value : -1;
     }
+
+    private static string NormalizeHeader(string header) => Regex.Replace(header, @"[^a-zA-Z0-9]", "");
 
     private static string GetCellString(IXLRow row, int colNumber)
     {
@@ -203,20 +267,20 @@ public class ExcelParserService
 
     private static string NormalizeStatus(string? raw)
     {
-        if (string.IsNullOrWhiteSpace(raw)) return "INVALID";
+        if (string.IsNullOrWhiteSpace(raw)) return ImportRowValidationStatuses.Invalid;
         string s = raw.Trim().ToUpperInvariant().Replace("_", " ");
-        if (s == "ALLOCATED" || s == "ASSIGNED") return "Allocated";
-        if (s == "IN STOCK" || s == "INSTOCK" || s == "STOCK" || s == "AVAILABLE") return "In Stock";
-        return "INVALID";
+        if (s == LaptopStatuses.AllocatedLegacy || s == "ASSIGNED") return LaptopStatuses.Allocated;
+        if (s == "IN STOCK" || s == "INSTOCK" || s == "STOCK" || s == "AVAILABLE") return LaptopStatuses.InStock;
+        return ImportRowValidationStatuses.Invalid;
     }
 
     private static string NormalizeRasStatus(string? raw)
     {
-        if (string.IsNullOrWhiteSpace(raw)) return "UNKNOWN";
+        if (string.IsNullOrWhiteSpace(raw)) return RasStatuses.Unknown;
         string s = raw.Trim().ToUpperInvariant();
-        if (s == "ACTIVE" || s == "ACT") return "ACTIVE";
-        if (s == "INACTIVE" || s == "INACT" || s == "IN-ACTIVE" || s == "LOST") return "INACTIVE";
-        return "UNKNOWN";
+        if (s == RasStatuses.Active || s == "ACT") return RasStatuses.Active;
+        if (s == RasStatuses.Inactive || s == "INACT" || s == "IN-ACTIVE" || s == RasStatuses.Lost) return RasStatuses.Inactive;
+        return RasStatuses.Unknown;
     }
 
     private static string? NormalizeSpaces(string? raw)

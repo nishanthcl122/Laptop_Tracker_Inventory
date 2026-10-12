@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LaptopTracking.Api.Data;
 using LaptopTracking.Api.Models.DTOs;
 using LaptopTracking.Api.Models.Entities;
+using LaptopTracking.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace LaptopTracking.Api.Services;
@@ -26,7 +27,7 @@ public class RasReconciliationService
             return new ImportResultDto { Success = false, Message = $"RAS Batch #{batchId} not found." };
         }
 
-        if (batch.Status == "COMMITTED" || batch.Status == "CONFIRMED")
+        if (batch.Status == ImportBatchStatuses.Committed || batch.Status == ImportBatchStatuses.Confirmed)
         {
             return new ImportResultDto { Success = false, Message = $"RAS Batch #{batchId} is already committed." };
         }
@@ -65,7 +66,7 @@ public class RasReconciliationService
 
                 // Establish IsLost & RASStatus for all allocated laptops
                 var allocatedLaptops = await _db.LaptopCurrents
-                    .Where(l => l.Status == "Allocated" || l.Status == "ALLOCATED")
+                    .Where(l => l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy)
                     .ToListAsync(cancellationToken);
 
                 int activeCount = 0;
@@ -76,19 +77,19 @@ public class RasReconciliationService
                     if (!string.IsNullOrEmpty(lap.SAPId) && incomingSapSet.Contains(lap.SAPId))
                     {
                         lap.IsLost = false;
-                        lap.RASStatus = "ACTIVE";
+                        lap.RASStatus = RasStatuses.Active;
                         activeCount++;
                     }
                     else
                     {
                         lap.IsLost = true;
-                        lap.RASStatus = "LOST";
+                        lap.RASStatus = RasStatuses.Lost;
                         lostCount++;
                     }
                     lap.UpdatedAt = DateTimeOffset.UtcNow;
                 }
 
-                batch.Status = "COMMITTED";
+                batch.Status = ImportBatchStatuses.Committed;
                 await _db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
@@ -141,7 +142,7 @@ public class RasReconciliationService
 
                 // Reconcile Allocated Laptops:
                 var allocatedLaptops = await _db.LaptopCurrents
-                    .Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && l.SAPId != null)
+                    .Where(l => (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && l.SAPId != null)
                     .ToListAsync(cancellationToken);
 
                 var auditEntries = new List<LaptopAuditHistory>();
@@ -153,7 +154,7 @@ public class RasReconciliationService
                     if (lap.IsLost)
                     {
                         // Stays Lost permanently even if employee reappears
-                        lap.RASStatus = "LOST";
+                        lap.RASStatus = RasStatuses.Lost;
                         continue;
                     }
 
@@ -163,7 +164,7 @@ public class RasReconciliationService
                     if (wasInPrevRas && !inNewRas)
                     {
                         // Transition to NOT_IN_UHG. Remains Status = ALLOCATED, never move to In Stock, do not clear SAP or UserName.
-                        if (lap.RASStatus != "NOT_IN_UHG")
+                        if (lap.RASStatus != RasStatuses.NotInUhg)
                         {
                             previousRasRepByEmployee.TryGetValue(lap.SAPId!, out var prevRas);
                             DateOnly? prevLwd = previousRasLwdByEmployee.TryGetValue(lap.SAPId!, out var lwdVal) ? lwdVal : prevRas?.LastWorkingDay;
@@ -199,13 +200,13 @@ public class RasReconciliationService
                             notInUhgCount++;
                         }
 
-                        lap.RASStatus = "NOT_IN_UHG";
+                        lap.RASStatus = RasStatuses.NotInUhg;
                         lap.UpdatedAt = DateTimeOffset.UtcNow;
                     }
                     else if (inNewRas)
                     {
                         // Returns or continues as Active
-                        if (lap.RASStatus == "NOT_IN_UHG")
+                        if (lap.RASStatus == RasStatuses.NotInUhg)
                         {
                             auditEntries.Add(new LaptopAuditHistory
                             {
@@ -227,7 +228,7 @@ public class RasReconciliationService
                             returnedCount++;
                         }
 
-                        lap.RASStatus = "ACTIVE";
+                        lap.RASStatus = RasStatuses.Active;
                         lap.UpdatedAt = DateTimeOffset.UtcNow;
                     }
                 }
@@ -237,7 +238,7 @@ public class RasReconciliationService
                     await _db.LaptopAuditHistories.AddRangeAsync(auditEntries, cancellationToken);
                 }
 
-                batch.Status = "COMMITTED";
+                batch.Status = ImportBatchStatuses.Committed;
                 await _db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
@@ -258,7 +259,7 @@ public class RasReconciliationService
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
-            batch.Status = "FAILED";
+            batch.Status = ImportBatchStatuses.Failed;
             await _db.SaveChangesAsync(cancellationToken);
             return new ImportResultDto
             {

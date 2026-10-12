@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using LaptopTracking.Api.Data;
 using LaptopTracking.Api.Models.DTOs;
 using LaptopTracking.Api.Models.Entities;
+using LaptopTracking.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace LaptopTracking.Api.Services;
@@ -50,13 +51,13 @@ public class LaptopService
             else
             {
                 string normStatus = statusFilter.Trim().ToUpperInvariant().Replace("_", " ");
-                if (normStatus == "ALLOCATED" || normStatus == "ASSIGNED")
+                if (normStatus == LaptopStatuses.AllocatedLegacy || normStatus == "ASSIGNED")
                 {
-                    q = q.Where(l => l.Status == "Allocated");
+                    q = q.Where(l => l.Status == LaptopStatuses.Allocated);
                 }
-                else if (normStatus == "IN STOCK" || normStatus == "INSTOCK" || normStatus == "STOCK")
+                else if (normStatus == LaptopStatuses.InStock.ToUpperInvariant() || normStatus == "INSTOCK" || normStatus == "STOCK")
                 {
-                    q = q.Where(l => l.Status == "In Stock");
+                    q = q.Where(l => l.Status == LaptopStatuses.InStock);
                 }
                 else
                 {
@@ -74,35 +75,35 @@ public class LaptopService
                     .Select(r => r.ToUpperInvariant())
                     .ToList();
 
-                q = q.Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && (
-                    (rasList.Contains("ACTIVE") && !l.IsLost && l.RASStatus == "ACTIVE") ||
-                    (rasList.Contains("LOST") && l.IsLost) ||
-                    ((rasList.Contains("NOT_IN_UHG") || rasList.Contains("NOT IN UHG")) && !l.IsLost && l.RASStatus == "NOT_IN_UHG") ||
-                    (rasList.Contains("UNKNOWN") && (l.RASStatus == "UNKNOWN" || l.RASStatus == null))
+                q = q.Where(l => (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && (
+                    (rasList.Contains(RasStatuses.Active) && !l.IsLost && l.RASStatus == RasStatuses.Active) ||
+                    (rasList.Contains(RasStatuses.Lost) && l.IsLost) ||
+                    ((rasList.Contains(RasStatuses.NotInUhg) || rasList.Contains("NOT IN UHG")) && !l.IsLost && l.RASStatus == RasStatuses.NotInUhg) ||
+                    (rasList.Contains(RasStatuses.Unknown) && (l.RASStatus == RasStatuses.Unknown || l.RASStatus == null))
                 ));
             }
             else
             {
                 string normRas = query.RASStatus.Trim().ToUpperInvariant();
-                if (normRas == "ACTIVE")
+                if (normRas == RasStatuses.Active)
                 {
-                    q = q.Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && !l.IsLost && l.RASStatus == "ACTIVE");
+                    q = q.Where(l => (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && !l.IsLost && l.RASStatus == RasStatuses.Active);
                 }
-                else if (normRas == "LOST")
+                else if (normRas == RasStatuses.Lost)
                 {
-                    q = q.Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && l.IsLost);
+                    q = q.Where(l => (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && l.IsLost);
                 }
-                else if (normRas == "NOT_IN_UHG" || normRas == "NOT IN UHG" || normRas == "NOTINUHG")
+                else if (normRas == RasStatuses.NotInUhg || normRas == "NOT IN UHG" || normRas == "NOTINUHG")
                 {
-                    q = q.Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && !l.IsLost && l.RASStatus == "NOT_IN_UHG");
+                    q = q.Where(l => (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && !l.IsLost && l.RASStatus == RasStatuses.NotInUhg);
                 }
-                else if (normRas == "INACTIVE")
+                else if (normRas == RasStatuses.Inactive)
                 {
-                    q = q.Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && (l.IsLost || l.RASStatus == "NOT_IN_UHG"));
+                    q = q.Where(l => (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && (l.IsLost || l.RASStatus == RasStatuses.NotInUhg));
                 }
-                else if (normRas == "UNKNOWN")
+                else if (normRas == RasStatuses.Unknown)
                 {
-                    q = q.Where(l => l.RASStatus == "UNKNOWN" || l.RASStatus == null);
+                    q = q.Where(l => l.RASStatus == RasStatuses.Unknown || l.RASStatus == null);
                 }
             }
         }
@@ -199,7 +200,7 @@ public class LaptopService
         // Stock Ageing min / max
         if (query.StockAgeMin.HasValue || query.StockAgeMax.HasValue)
         {
-            q = q.Where(l => l.Status == "In Stock" && l.InStockSince.HasValue);
+            q = q.Where(l => l.Status == LaptopStatuses.InStock && l.InStockSince.HasValue);
             if (query.StockAgeMin.HasValue)
             {
                 var maxStartDate = today.AddDays(-query.StockAgeMin.Value);
@@ -216,7 +217,7 @@ public class LaptopService
         if (query.LwdApproaching15Days == true)
         {
             var maxLwd = today.AddDays(15);
-            q = q.Where(l => l.Status == "Allocated" && l.SAPId != null &&
+            q = q.Where(l => l.Status == LaptopStatuses.Allocated && l.SAPId != null &&
                              _db.RASCurrents.Any(r => r.EmployeeCode == l.SAPId &&
                                                       r.LastWorkingDay.HasValue &&
                                                       r.LastWorkingDay.Value >= today &&
@@ -363,8 +364,8 @@ public class LaptopService
         }
 
         var normalizedStatus = request.Status.Trim();
-        if (!normalizedStatus.Equals("Allocated", StringComparison.OrdinalIgnoreCase) &&
-            !normalizedStatus.Equals("In Stock", StringComparison.OrdinalIgnoreCase))
+        if (!normalizedStatus.Equals(LaptopStatuses.Allocated, StringComparison.OrdinalIgnoreCase) &&
+            !normalizedStatus.Equals(LaptopStatuses.InStock, StringComparison.OrdinalIgnoreCase))
         {
             return new UpdateLaptopResultDto { Success = false, Message = "Status must be 'Allocated' or 'In Stock'." };
         }
@@ -390,7 +391,7 @@ public class LaptopService
         var now = DateTimeOffset.UtcNow;
         var today = DateOnly.FromDateTime(now.DateTime);
 
-        if (normalizedStatus.Equals("Allocated", StringComparison.OrdinalIgnoreCase))
+        if (normalizedStatus.Equals(LaptopStatuses.Allocated, StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(request.Location))
             {
@@ -402,7 +403,7 @@ public class LaptopService
                 return new UpdateLaptopResultDto { Success = false, Message = "SAP ID is required when allocating the laptop." };
             }
         }
-        else if (normalizedStatus.Equals("In Stock", StringComparison.OrdinalIgnoreCase))
+        else if (normalizedStatus.Equals(LaptopStatuses.InStock, StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrWhiteSpace(request.Location))
             {
@@ -437,22 +438,22 @@ public class LaptopService
             laptop.FBRRequest = string.IsNullOrWhiteSpace(request.FBRRequest) ? laptop.FBRRequest : request.FBRRequest.Trim();
             laptop.Location = request.Location!.Trim();
             laptop.Status = normalizedStatus;
-            laptop.ITSPOC = normalizedStatus.Equals("Allocated", StringComparison.OrdinalIgnoreCase) ? request.ITSPOC?.Trim() : null;
-            laptop.SAPId = normalizedStatus.Equals("Allocated", StringComparison.OrdinalIgnoreCase) ? request.SAPId?.Trim() : null;
-            laptop.UserName = normalizedStatus.Equals("Allocated", StringComparison.OrdinalIgnoreCase) ? request.UserName?.Trim() : null;
-            laptop.InStockSince = normalizedStatus.Equals("In Stock", StringComparison.OrdinalIgnoreCase)
+            laptop.ITSPOC = normalizedStatus.Equals(LaptopStatuses.Allocated, StringComparison.OrdinalIgnoreCase) ? request.ITSPOC?.Trim() : null;
+            laptop.SAPId = normalizedStatus.Equals(LaptopStatuses.Allocated, StringComparison.OrdinalIgnoreCase) ? request.SAPId?.Trim() : null;
+            laptop.UserName = normalizedStatus.Equals(LaptopStatuses.Allocated, StringComparison.OrdinalIgnoreCase) ? request.UserName?.Trim() : null;
+            laptop.InStockSince = normalizedStatus.Equals(LaptopStatuses.InStock, StringComparison.OrdinalIgnoreCase)
                 ? (request.InStockSince ?? today)
                 : null;
 
-            if (normalizedStatus.Equals("Allocated", StringComparison.OrdinalIgnoreCase))
+            if (normalizedStatus.Equals(LaptopStatuses.Allocated, StringComparison.OrdinalIgnoreCase))
             {
                 laptop.IsLost = false;
-                laptop.RASStatus = string.IsNullOrWhiteSpace(request.RASStatus) ? "ACTIVE" : request.RASStatus.Trim();
+                laptop.RASStatus = string.IsNullOrWhiteSpace(request.RASStatus) ? RasStatuses.Active : request.RASStatus.Trim();
             }
             else
             {
                 laptop.IsLost = false;
-                laptop.RASStatus = "UNKNOWN";
+                laptop.RASStatus = RasStatuses.Unknown;
             }
 
             laptop.LastSeenDate = today;
@@ -531,22 +532,22 @@ public class LaptopService
         Dictionary<string, DateOnly>? rasLwdBySap = null)
     {
         int? ageingDays = null;
-        if (l.Status == "In Stock" && l.InStockSince.HasValue)
+        if (l.Status == LaptopStatuses.InStock && l.InStockSince.HasValue)
         {
             ageingDays = today.DayNumber - l.InStockSince.Value.DayNumber;
         }
 
-        bool isAllocated = l.Status == "Allocated" || l.Status == "ALLOCATED";
+        bool isAllocated = l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy;
         bool hasSap = !string.IsNullOrEmpty(l.SAPId);
         RASCurrent? rasFirst = (hasSap && rasFirstBySap != null && rasFirstBySap.TryGetValue(l.SAPId!, out var rf)) ? rf : null;
         bool inRas = rasFirst != null;
 
-        string rasStatus = "UNKNOWN";
+        string rasStatus = RasStatuses.Unknown;
         if (isAllocated)
         {
             if (l.IsLost)
             {
-                rasStatus = "LOST";
+                rasStatus = RasStatuses.Lost;
             }
             else if (!string.IsNullOrEmpty(l.RASStatus))
             {
@@ -554,11 +555,11 @@ public class LaptopService
             }
             else if (inRas)
             {
-                rasStatus = "ACTIVE";
+                rasStatus = RasStatuses.Active;
             }
             else
             {
-                rasStatus = "UNKNOWN";
+                rasStatus = RasStatuses.Unknown;
             }
         }
 

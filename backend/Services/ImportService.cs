@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using LaptopTracking.Api.Data;
 using LaptopTracking.Api.Models.DTOs;
 using LaptopTracking.Api.Models.Entities;
+using LaptopTracking.Api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -33,10 +34,10 @@ public class ImportService
         // 1. Create a Staged Batch
         var batch = new ImportBatch
         {
-            BatchType = "LAPTOP",
+            BatchType = ImportBatchTypes.Laptop,
             SnapshotDate = snapshotDate,
             FileName = file.FileName,
-            Status = "STAGED",
+            Status = ImportBatchStatuses.Staged,
             UploadedAt = DateTimeOffset.UtcNow
         };
 
@@ -48,7 +49,7 @@ public class ImportService
 
         if (parseResult.Errors.Count > 0)
         {
-            batch.Status = "FAILED";
+            batch.Status = ImportBatchStatuses.Failed;
             batch.ErrorCount = parseResult.Errors.Count;
             await _db.SaveChangesAsync(cancellationToken);
 
@@ -104,13 +105,13 @@ public class ImportService
             return new ImportResultDto { Success = false, Message = $"Batch #{batchId} not found." };
         }
 
-        if (batch.Status == "CONFIRMED")
+        if (batch.Status == ImportBatchStatuses.Confirmed)
         {
             return new ImportResultDto { Success = false, Message = $"Batch #{batchId} has already been confirmed." };
         }
 
         var stagedRows = await _db.ImportBatchRows
-            .Where(r => r.BatchId == batchId && r.ValidationStatus == "VALID")
+            .Where(r => r.BatchId == batchId && r.ValidationStatus == ImportRowValidationStatuses.Valid)
             .ToListAsync(cancellationToken);
 
         using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
@@ -130,21 +131,21 @@ public class ImportService
 
             foreach (var row in stagedRows)
             {
-                bool isAllocated = row.Status == "Allocated" || row.Status == "ALLOCATED";
+                bool isAllocated = row.Status == LaptopStatuses.Allocated || row.Status == LaptopStatuses.AllocatedLegacy;
                 bool isLost = false;
-                string rasStatus = "UNKNOWN";
+                string rasStatus = RasStatuses.Unknown;
 
                 if (isAllocated && hasRasBaseline)
                 {
                     bool isMatch = !string.IsNullOrWhiteSpace(row.SAPId) && rasSapSet.Contains(row.SAPId);
                     isLost = !isMatch;
-                    rasStatus = isMatch ? "ACTIVE" : "LOST";
+                    rasStatus = isMatch ? RasStatuses.Active : RasStatuses.Lost;
                 }
 
                 if (row.ChangeType == "NEW")
                 {
                     DateOnly? inStockSince = null;
-                    if (row.Status == "In Stock")
+                    if (row.Status == LaptopStatuses.InStock)
                     {
                         inStockSince = batch.SnapshotDate;
                     }
@@ -191,18 +192,18 @@ public class ImportService
                     });
 
                     // Update stock ageing start date logic
-                    if (current.Status != "In Stock" && row.Status == "In Stock")
+                    if (current.Status != LaptopStatuses.InStock && row.Status == LaptopStatuses.InStock)
                     {
                         current.InStockSince = batch.SnapshotDate;
                     }
-                    else if (current.Status == "In Stock" && row.Status != "In Stock")
+                    else if (current.Status == LaptopStatuses.InStock && row.Status != LaptopStatuses.InStock)
                     {
                         current.InStockSince = null;
                         if (hasRasBaseline)
                         {
                             bool isMatch = !string.IsNullOrWhiteSpace(row.SAPId) && rasSapSet.Contains(row.SAPId);
                             current.IsLost = !isMatch;
-                            current.RASStatus = isMatch ? "ACTIVE" : "LOST";
+                            current.RASStatus = isMatch ? RasStatuses.Active : RasStatuses.Lost;
                         }
                     }
 
@@ -234,7 +235,7 @@ public class ImportService
                 await _db.LaptopAuditHistories.AddRangeAsync(auditEntries, cancellationToken);
             }
 
-            batch.Status = "CONFIRMED";
+            batch.Status = ImportBatchStatuses.Confirmed;
             await _db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -254,7 +255,7 @@ public class ImportService
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);
-            batch.Status = "FAILED";
+            batch.Status = ImportBatchStatuses.Failed;
             await _db.SaveChangesAsync(cancellationToken);
             _logger.LogError(ex, $"Failed to commit batch {batchId}");
             return new ImportResultDto

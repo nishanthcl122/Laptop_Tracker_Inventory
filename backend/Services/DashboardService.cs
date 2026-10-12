@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using LaptopTracking.Api.Data;
 using LaptopTracking.Api.Models.DTOs;
+using LaptopTracking.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace LaptopTracking.Api.Services;
@@ -23,11 +24,11 @@ public class DashboardService
         var maxLwd = today.AddDays(15);
 
         var total = await _db.LaptopCurrents.CountAsync(cancellationToken);
-        var allocated = await _db.LaptopCurrents.CountAsync(l => l.Status == "Allocated" || l.Status == "ALLOCATED", cancellationToken);
-        var inStock = await _db.LaptopCurrents.CountAsync(l => l.Status == "In Stock" || l.Status == "IN_STOCK", cancellationToken);
+        var allocated = await _db.LaptopCurrents.CountAsync(l => l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy, cancellationToken);
+        var inStock = await _db.LaptopCurrents.CountAsync(l => l.Status == LaptopStatuses.InStock || l.Status == LaptopStatuses.InStockLegacy, cancellationToken);
 
         var locationBreakdown = await _db.LaptopCurrents
-            .Where(l => (l.Status == "In Stock" || l.Status == "IN_STOCK") && !string.IsNullOrWhiteSpace(l.Location))
+            .Where(l => (l.Status == LaptopStatuses.InStock || l.Status == LaptopStatuses.InStockLegacy) && !string.IsNullOrWhiteSpace(l.Location))
             .GroupBy(l => l.Location)
             .Select(g => new LocationBreakdownItemDto
             {
@@ -39,16 +40,16 @@ public class DashboardService
             .ToListAsync(cancellationToken);
 
         var rasActive = await _db.LaptopCurrents.CountAsync(l =>
-            (l.Status == "Allocated" || l.Status == "ALLOCATED") && !l.IsLost && l.RASStatus == "ACTIVE", cancellationToken);
+            (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && !l.IsLost && l.RASStatus == RasStatuses.Active, cancellationToken);
 
         var lost = await _db.LaptopCurrents.CountAsync(l =>
-            (l.Status == "Allocated" || l.Status == "ALLOCATED") && l.IsLost, cancellationToken);
+            (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && l.IsLost, cancellationToken);
 
         var notInUhg = await _db.LaptopCurrents.CountAsync(l =>
-            (l.Status == "Allocated" || l.Status == "ALLOCATED") && !l.IsLost && l.RASStatus == "NOT_IN_UHG", cancellationToken);
+            (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && !l.IsLost && l.RASStatus == RasStatuses.NotInUhg, cancellationToken);
 
         var lwdApproaching = await _db.LaptopCurrents.CountAsync(l =>
-            (l.Status == "Allocated" || l.Status == "ALLOCATED") &&
+            (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) &&
             l.SAPId != null &&
             _db.RASCurrents.Any(r => r.EmployeeCode == l.SAPId &&
                                      r.LastWorkingDay.HasValue &&
@@ -57,7 +58,7 @@ public class DashboardService
 
         // Distinct employees in RASCurrent with no allocated laptop + breakdown
         var rasIdleRows = await _db.RASCurrents
-            .Where(r => !_db.LaptopCurrents.Any(l => l.SAPId == r.EmployeeCode && (l.Status == "Allocated" || l.Status == "ALLOCATED")))
+            .Where(r => !_db.LaptopCurrents.Any(l => l.SAPId == r.EmployeeCode && (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy)))
             .Select(r => new { r.RasRecordId, r.EmployeeCode, r.WBSType, r.PSA })
             .ToListAsync(cancellationToken);
 
@@ -132,7 +133,7 @@ public class DashboardService
 
         // LWD Risk Breakdown (exact same bucket definitions & calculation as previously in the chart)
         var allocatedLwds = await _db.LaptopCurrents
-            .Where(l => (l.Status == "Allocated" || l.Status == "ALLOCATED") && l.SAPId != null)
+            .Where(l => (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && l.SAPId != null)
             .Join(_db.RASCurrents.Where(r => r.LastWorkingDay.HasValue),
                   l => l.SAPId,
                   r => r.EmployeeCode,
@@ -178,29 +179,29 @@ public class DashboardService
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-        var allocatedCount = await _db.LaptopCurrents.CountAsync(l => l.Status == "Allocated" || l.Status == "ALLOCATED",cancellationToken);
-        var inStockCount = await _db.LaptopCurrents.CountAsync(l => l.Status == "In Stock" || l.Status == "IN_STOCK", cancellationToken);
+        var allocatedCount = await _db.LaptopCurrents.CountAsync(l => l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy,cancellationToken);
+        var inStockCount = await _db.LaptopCurrents.CountAsync(l => l.Status == LaptopStatuses.InStock || l.Status == LaptopStatuses.InStockLegacy, cancellationToken);
 
         var rasActive = await _db.LaptopCurrents.CountAsync(l =>
-            (l.Status == "Allocated" || l.Status == "ALLOCATED") && !l.IsLost && l.RASStatus == "ACTIVE", cancellationToken);
+            (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && !l.IsLost && l.RASStatus == RasStatuses.Active, cancellationToken);
 
         var lostCount = await _db.LaptopCurrents.CountAsync(l =>
-            (l.Status == "Allocated" || l.Status == "ALLOCATED") && l.IsLost, cancellationToken);
+            (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && l.IsLost, cancellationToken);
 
         var notInUhgCount = await _db.LaptopCurrents.CountAsync(l =>
-            (l.Status == "Allocated" || l.Status == "ALLOCATED") && !l.IsLost && l.RASStatus == "NOT_IN_UHG", cancellationToken);
+            (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy) && !l.IsLost && l.RASStatus == RasStatuses.NotInUhg, cancellationToken);
 
         // 1. Allocation Status (Allocated, In Stock, Lost)
         var allocationList = new List<ChartDataPoint>
         {
-            new() { Name = "Allocated", Value = allocatedCount },
-            new() { Name = "In Stock", Value = inStockCount },
-            new() { Name = "Lost", Value = lostCount }
+            new() { Name = LaptopStatuses.Allocated, Value = allocatedCount },
+            new() { Name = LaptopStatuses.InStock, Value = inStockCount },
+            new() { Name = RasStatuses.Lost, Value = lostCount }
         };
 
         // 2. Stock Ageing (In Stock only)
         var inStockLaptops = await _db.LaptopCurrents
-            .Where(l => l.Status == "In Stock" || l.Status == "IN_STOCK")
+            .Where(l => l.Status == LaptopStatuses.InStock || l.Status == LaptopStatuses.InStockLegacy)
             .Select(l => l.InStockSince)
             .ToListAsync(cancellationToken);
 
@@ -226,14 +227,14 @@ public class DashboardService
         // 3. Project RAS Activity (Allocated only: ACTIVE, LOST, NOT IN UHG)
         var rasGroups = new List<ChartDataPoint>
         {
-            new() { Name = "ACTIVE", Value = rasActive },
-            new() { Name = "LOST", Value = lostCount },
+            new() { Name = RasStatuses.Active, Value = rasActive },
+            new() { Name = RasStatuses.Lost, Value = lostCount },
             new() { Name = "NOT IN UHG", Value = notInUhgCount }
         };
 
         // 4. LWD Risk Timeline (Allocated only, sourced from RASCurrent)
         var allocatedLwds = await _db.LaptopCurrents
-            .Where(l => l.Status == "Allocated" && l.SAPId != null)
+            .Where(l => l.Status == LaptopStatuses.Allocated && l.SAPId != null)
             .Join(_db.RASCurrents.Where(r => r.LastWorkingDay.HasValue),
                   l => l.SAPId,
                   r => r.EmployeeCode,
@@ -270,7 +271,7 @@ public class DashboardService
 
         // 6. RAS Idle Location Distribution: Group by PSA, COUNT(DISTINCT EmployeeCode)
         var rasIdleLocationList = await _db.RASCurrents
-            .Where(r => !_db.LaptopCurrents.Any(l => l.SAPId == r.EmployeeCode && (l.Status == "Allocated" || l.Status == "ALLOCATED")) && !string.IsNullOrEmpty(r.PSA))
+            .Where(r => !_db.LaptopCurrents.Any(l => l.SAPId == r.EmployeeCode && (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy)) && !string.IsNullOrEmpty(r.PSA))
             .GroupBy(r => r.PSA)
             .Select(g => new ChartDataPoint { Name = g.Key ?? "Unknown", Value = g.Select(x => x.EmployeeCode).Distinct().Count() })
             .OrderByDescending(x => x.Value)
@@ -297,7 +298,7 @@ public class DashboardService
         )
     {
         var baseQuery = _db.RASCurrents.Where(r =>
-            !_db.LaptopCurrents.Any(l => l.SAPId == r.EmployeeCode && (l.Status == "Allocated" || l.Status == "ALLOCATED")));
+            !_db.LaptopCurrents.Any(l => l.SAPId == r.EmployeeCode && (l.Status == LaptopStatuses.Allocated || l.Status == LaptopStatuses.AllocatedLegacy)));
 
         var deemedCodesQuery = _db.RasDeemedUnbillables
             .Where(d => d.IsActive)
@@ -414,8 +415,8 @@ public class DashboardService
         {
             Location = location,
             TotalCount = dtos.Count,
-            AllocatedCount = dtos.Count(x => x.Status == "Allocated"),
-            InStockCount = dtos.Count(x => x.Status == "In Stock"),
+            AllocatedCount = dtos.Count(x => x.Status == LaptopStatuses.Allocated),
+            InStockCount = dtos.Count(x => x.Status == LaptopStatuses.InStock),
             Laptops = dtos
         };
     }
