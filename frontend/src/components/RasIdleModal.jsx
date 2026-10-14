@@ -20,11 +20,15 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
   const initialWbs = initialFilters?.wbsType || '';
   const initialBilling = initialFilters?.billingClassification || '';
   const initialSrch = initialFilters?.search || '';
+  const initialProj = initialFilters?.projectName || '';
+  const initialBand = initialFilters?.band || '';
 
   const [employees, setEmployees] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(initialSrch);
+  const [projectName, setProjectName] = useState(initialProj);
+  const [band, setBand] = useState(initialBand);
   const [location, setLocation] = useState(initialLoc);
   const [wbsType, setWbsType] = useState(initialWbs);
   const [billingClassification, setBillingClassification] = useState(initialBilling);
@@ -35,6 +39,8 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
   const pageSize = 50;
 
   useEffect(() => {
+    setProjectName(initialProj);
+    setBand(initialBand);
     setLocation(initialLoc);
     setWbsType(initialWbs);
     setBillingClassification(initialBilling);
@@ -68,7 +74,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
         setTotalCount(res.totalCount || 0);
       })
       .catch(err => {
-        console.error('Failed to load RAS Idle workforce', err);
+        console.error('Failed to load Resource without laptop details', err);
       })
       .finally(() => setLoading(false));
   }, [search, location, wbsType, billingClassification, page]);
@@ -104,6 +110,8 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
 
   const handleResetAll = () => {
     setSearch('');
+    setProjectName('');
+    setBand('');
     setLocation('ALL');
     setWbsType('');
     setBillingClassification('');
@@ -121,8 +129,12 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
     () => Array.from(new Set(employees.map((e) => e.employeeName).filter(Boolean))),
     [employees]
   );
-  const uniqueStatuses = useMemo(
-    () => Array.from(new Set(employees.map((e) => e.employeeStatus).filter(Boolean))),
+  const uniqueBands = useMemo(
+    () => Array.from(new Set(employees.map((e) => e.band).filter(Boolean))),
+    [employees]
+  );
+  const uniqueProject = useMemo(
+    () => Array.from(new Set(employees.map((e) => e.projectName).filter(Boolean))),
     [employees]
   );
   const uniqueWbsTypes = ['Offshore', 'Onsite', 'Nearshore', 'Unknown'];
@@ -141,8 +153,11 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
     if (columnFilters.employeeName && columnFilters.employeeName.length > 0) {
       list = list.filter((e) => columnFilters.employeeName.includes(e.employeeName));
     }
-    if (columnFilters.employeeStatus && columnFilters.employeeStatus.length > 0) {
-      list = list.filter((e) => columnFilters.employeeStatus.includes(e.employeeStatus));
+    if (columnFilters.projectName && columnFilters.projectName.length > 0) {
+      list = list.filter((e) => columnFilters.projectName.includes(e.projectName));
+    }
+    if (columnFilters.band && columnFilters.band.length > 0) {
+      list = list.filter((e) => columnFilters.band.includes(e.band));
     }
     if (columnFilters.wbsType && columnFilters.wbsType.length > 0) {
       list = list.filter((e) => columnFilters.wbsType.includes(e.wbsType));
@@ -345,21 +360,38 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                   </div>
                 </th>
 
-                {/* Status */}
+                {/* ProjectName */}
                 <th className="py-3 px-4 text-center border-y border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
                   <div className="flex items-center justify-center space-x-1">
-                    <span onClick={() => handleSort('employeeStatus')} className="cursor-pointer">
-                      Status {getSortIcon('employeeStatus')}
+                    <span onClick={() => handleSort('projectName')} className="cursor-pointer">
+                      ProjectName {getSortIcon('projectName')}
                     </span>
                     <ExcelColumnFilter
-                      title="Status"
-                      columnKey="employeeStatus"
-                      selectedValues={columnFilters?.employeeStatus}
-                      options={uniqueStatuses}
-                      onApply={(vals) => handleColumnFilterChange('employeeStatus', vals)}
+                      title="ProjectName"
+                      columnKey="projectName"
+                      selectedValues={columnFilters?.projectName}
+                      options={uniqueProject}
+                      onApply={(vals) => handleColumnFilterChange('projectName', vals)}
                     />
                   </div>
                 </th>
+                
+                {/* Band */}
+                <th className="py-3 px-4 text-center border-y border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
+                  <div className="flex items-center justify-center space-x-1">
+                    <span onClick={() => handleSort('band')} className="cursor-pointer">
+                      Band {getSortIcon('band')}
+                    </span>
+                    <ExcelColumnFilter
+                      title="Band"
+                      columnKey="band"
+                      selectedValues={columnFilters?.band}
+                      options={uniqueBands}
+                      onApply={(vals) => handleColumnFilterChange('band', vals)}
+                    />
+                  </div>
+                </th>
+                
 
                 {/* WBS Type */}
                 <th className="py-3 px-4 text-center border-y border-slate-200/80 bg-slate-100/90 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
@@ -450,12 +482,6 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                     : wbsType === 'nearshore'
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                     : 'border-slate-200 bg-slate-100 text-slate-600';
-                  const status = (emp.employeeStatus || 'Active').toLowerCase();
-                  const statusStyles = status === 'active'
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                    : status.includes('resign') || status.includes('separat')
-                    ? 'border-rose-200 bg-rose-50 text-rose-700'
-                    : 'border-slate-200 bg-slate-100 text-slate-700';
                   const accentStyles = wbsType === 'offshore'
                     ? 'border-l-purple-500'
                     : wbsType === 'onsite'
@@ -480,9 +506,15 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                       <div className="mt-1 text-[10px] text-slate-400">Employee</div>
                     </td>
                     <td className="py-3.5 px-4 text-center align-middle border-y border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${statusStyles}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${status === 'active' ? 'bg-emerald-500' : status.includes('resign') || status.includes('separat') ? 'bg-rose-500' : 'bg-slate-400'}`} />
-                        {emp.employeeStatus || 'Active'}
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border border-amber-200 bg-amber-50 text-amber-700`}>
+                        <span className={`h-1.5 w-1.5 rounded-full bg-amber-500`} />
+                        {emp.projectName}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-center align-middle border-y border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border border-emerald-200 bg-emerald-50 text-emerald-700`}>
+                        <span className={`h-1.5 w-1.5 rounded-full bg-emerald-500`} />
+                        {emp.band}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-center align-middle border-y border-slate-200/80 bg-white shadow-sm transition-colors duration-200 group-hover:bg-purple-50/70 group-hover:border-y-purple-100">

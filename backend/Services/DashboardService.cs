@@ -290,9 +290,11 @@ public class DashboardService
     }
 
     public async Task<PagedResult<RasIdleEmployeeDto>> GetRasIdleEmployeesAsync(
-        string? location, string? search,
+        string? location,
+        string? search,
         CancellationToken cancellationToken,
-        string? wbsType = null, string? billingClassification = null,
+        string? wbsType = null,
+        string? billingClassification = null,
         int page = 1,
         int pageSize = 50
         )
@@ -358,7 +360,8 @@ public class DashboardService
                 SAPId = g.Key,
                 EmployeeName = g.Select(x => x.EmployeeName).FirstOrDefault(x => x != null) ?? "—",
                 Location = g.Select(x => x.PSA).FirstOrDefault(x => x != null) ?? "—",
-                EmployeeStatus = g.Select(x => x.EmployeeStatus).FirstOrDefault(x => x != null) ?? "—",
+                ProjectName = g.Select(x => x.ProjectName).FirstOrDefault(x => x != null) ?? "—",
+                Band = g.Select(x => x.Band).FirstOrDefault(x => x != null) ?? "—",
                 LastWorkingDay = g.Max(x => x.LastWorkingDay),
                 SnapshotDate = g.Max(x => x.SnapshotDate),
                 WBSType = g.Select(x => x.WBSType).FirstOrDefault(x => x != null) ?? "—"
