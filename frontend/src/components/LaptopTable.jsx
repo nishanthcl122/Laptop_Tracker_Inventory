@@ -117,12 +117,12 @@ export default function LaptopTable({
       )}
 
       {/* Main Table */}
-      <div className="overflow-auto min-h-[300px] bg-slate-50/60 px-3 pb-2">
-        <table className="w-full border-separate border-spacing-x-0 border-spacing-y-2 text-left text-xs text-slate-600">
+      <div className="overflow-auto  min-h-[300px] bg-slate-50/60 p-4">
+        <table className="w-full  border-separate border-spacing-y-2 text-left text-xs text-slate-600">
           <thead className="sticky top-0 z-10 bg-slate-100/95 text-slate-600 font-semibold uppercase tracking-[0.08em] text-[10px] backdrop-blur-md shadow-sm">
             <tr >
               {/* Serial No */}
-              <th className="h-14 px-4 align-middle rounded-l-xl border-y border-l border-slate-200/80 bg-slate-100/95 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
+              <th className="h-14 pl-6 pr-4 align-middle border-y border-l border-slate-200/80 bg-slate-100/95 hover:bg-slate-200/80 transition-colors whitespace-nowrap">
                 <div className="flex h-full items-center justify-between gap-3">
                   <span onClick={() => handleSort('serialnumber')} className="inline-flex min-w-0 flex-1 items-center gap-1.5 cursor-pointer">
                     Serial No. {getSortIcon('serialnumber')}
@@ -290,7 +290,7 @@ export default function LaptopTable({
               </th>
 
               {/* Ageing Days */}
-              <th className="h-14 px-3 align-middle rounded-r-xl border-y border-r border-slate-200/80 bg-slate-100/95 text-center whitespace-nowrap">
+              <th className="h-14 pl-3 pr-6 align-middle  border-y border-r border-slate-200/80 bg-slate-100/95 text-center whitespace-nowrap">
                 <span className="inline-flex h-full items-center justify-center">Ageing Days</span>
               </th>
             </tr>

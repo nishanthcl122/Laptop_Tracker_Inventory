@@ -214,7 +214,7 @@ export default function KpiCards({
 
                           <strong>{item.count.toLocaleString()}</strong>
 
-                          <small>In stock</small>
+                          {/* <small>In stock</small> */}
                         </button>
                       ))
                     ) : (
