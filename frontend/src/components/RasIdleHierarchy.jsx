@@ -102,9 +102,9 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                     <span className="text-lg font-bold tracking-tight text-slate-900 group-hover:text-sky-950 font-mono">
                       {onsiteCount.toLocaleString()}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-medium">
+                    {/* <span className="text-[11px] text-slate-400 font-medium">
                       Client site staff
-                    </span>
+                    </span> */}
                   </div>
                 </button>
 
@@ -125,9 +125,9 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                     <span className="text-lg font-bold tracking-tight text-slate-900 group-hover:text-emerald-950 font-mono">
                       {nearshoreCount.toLocaleString()}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-medium">
+                    {/* <span className="text-[11px] text-slate-400 font-medium">
                       Nearshore staff
-                    </span>
+                    </span> */}
                   </div>
                 </button>
 
@@ -214,7 +214,7 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                                   </span>
                                   <strong>{item.count.toLocaleString()}</strong>
 
-                                  <small>Staff</small>
+                                  {/* <small>Staff</small> */}
                                 </button>
                               ))}
                             </div>

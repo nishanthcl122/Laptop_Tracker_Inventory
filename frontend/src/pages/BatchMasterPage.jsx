@@ -1,5 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { History, Eye, X, Laptop, Users } from 'lucide-react';
+﻿import React, { useEffect, useState } from 'react';
+import {
+  History,
+  Eye,
+  X,
+  Laptop,
+  Users,
+  RefreshCw,
+  Database,
+  Plus,
+  ArrowLeftRight,
+  CircleCheck,
+  CircleAlert
+} from 'lucide-react';
 import { api } from '../services/api';
 
 export default function BatchMasterPage() {
@@ -51,33 +63,31 @@ export default function BatchMasterPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5 lg:-mx-5 lg:w-[calc(100%+2.5rem)]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-              <History className="w-5 h-5" />
-            </span>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900 tracking-tight">
-                Batch Master Log
-              </h1>
-              {/* <p className="text-xs text-slate-500">
-                Audit trail of daily Excel imports (Hardware Assets & RAS Workforce presence).
-              </p> */}
-            </div>
+      <div className="flex flex-col gap-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 items-start gap-3.5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700 shadow-inner">
+            <History className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+              Batch Master Log
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm leading-5 text-slate-500">
+              Track laptop and workforce import history, reconciliation activity, and ingestion status.
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center xl:justify-end">
           {/* Type Filter Buttons */}
-          <div className="flex items-center space-x-1 border border-slate-200 rounded-lg p-0.5 bg-slate-50">
+          <div className="inline-flex w-fit items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
             <button
               type="button"
               onClick={() => setTypeFilter('ALL')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                typeFilter === 'ALL' ? 'bg-white shadow-2xs text-blue-600' : 'text-slate-600 hover:text-slate-900'
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                typeFilter === 'ALL' ? 'bg-white text-blue-700 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
               }`}
             >
               All Batches
@@ -85,8 +95,8 @@ export default function BatchMasterPage() {
             <button
               type="button"
               onClick={() => setTypeFilter('LAPTOP')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                typeFilter === 'LAPTOP' ? 'bg-white shadow-2xs text-blue-600' : 'text-slate-600 hover:text-slate-900'
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                typeFilter === 'LAPTOP' ? 'bg-white text-blue-700 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
               }`}
             >
               Laptop Batches
@@ -94,8 +104,8 @@ export default function BatchMasterPage() {
             <button
               type="button"
               onClick={() => setTypeFilter('RAS')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                typeFilter === 'RAS' ? 'bg-white shadow-2xs text-indigo-600' : 'text-slate-600 hover:text-slate-900'
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                typeFilter === 'RAS' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-slate-200/80' : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
               }`}
             >
               RAS Batches
@@ -103,45 +113,59 @@ export default function BatchMasterPage() {
           </div>
 
           <button
+            type="button"
             onClick={fetchBatches}
-            className="px-3.5 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 cursor-pointer"
           >
+            <RefreshCw className="h-3.5 w-3.5" />
             Refresh Log
           </button>
         </div>
       </div>
 
       {/* Batches Table */}
-      <div className="bg-white border border-slate-200/90 rounded-xl shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs divide-y divide-slate-200">
-            <thead className="bg-slate-50/80 text-slate-600 font-semibold uppercase text-[11px] tracking-wider">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="overflow-x-auto bg-slate-50/60 p-3 sm:p-4">
+          <table className="w-full min-w-[1560px] border-separate border-spacing-y-1.5 text-left text-xs text-slate-600">
+            <thead className="sticky top-0 z-10 bg-slate-100/95 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-600 shadow-sm backdrop-blur-md">
               <tr>
-                <th className="py-3 px-4">Batch</th>
-                <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4">Snapshot Date</th>
-                <th className="py-3 px-4">File Name</th>
-                <th className="py-3 px-4 text-center">Records</th>
-                <th className="py-3 px-4 text-center text-blue-700">New</th>
-                <th className="py-3 px-4 text-center text-amber-700">Changed / Transitioned</th>
-                <th className="py-3 px-4 text-center text-emerald-700">Same</th>
-                <th className="py-3 px-4 text-center text-rose-700">Missing</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Uploaded At</th>
-                <th className="py-3 px-4 text-center">Action</th>
+                <th className="whitespace-nowrap rounded-l-lg border-y border-l border-slate-200/80 bg-slate-100/95 px-4 py-3.5">Batch</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5">Type</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5">Snapshot Date</th>
+                <th className="min-w-[280px] border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5">File Name</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5 text-right">Records</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5 text-right text-blue-700">New</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5 text-right text-amber-700">Changed / Transitioned</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5 text-right text-emerald-700">Same</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5 text-right text-rose-700">Missing</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5">Status</th>
+                <th className="whitespace-nowrap border-y border-slate-200/80 bg-slate-100/95 px-4 py-3.5">Uploaded At</th>
+                <th className="whitespace-nowrap rounded-r-lg border-y border-r border-slate-200/80 bg-slate-100/95 px-4 py-3.5 text-center">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={12} className="py-12 text-center text-slate-400">
-                    Loading batch registry...
+                  <td colSpan={12} className="rounded-xl border border-slate-200/80 bg-white px-4 py-16 text-center">
+                    <div className="mx-auto flex max-w-sm flex-col items-center">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-600">
+                        <RefreshCw className="h-5 w-5 animate-spin" />
+                      </span>
+                      <p className="mt-4 text-sm font-semibold text-slate-800">Loading batch registry</p>
+                      <p className="mt-1 text-xs text-slate-500">Retrieving import and reconciliation activity.</p>
+                    </div>
                   </td>
                 </tr>
               ) : filteredBatches.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="py-12 text-center text-slate-400">
-                    No batches match the filter.
+                  <td colSpan={12} className="rounded-xl border border-slate-200/80 bg-white px-4 py-16 text-center">
+                    <div className="mx-auto flex max-w-sm flex-col items-center">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
+                        <Database className="h-5 w-5" />
+                      </span>
+                      <p className="mt-4 text-sm font-semibold text-slate-800">No batches match the filter</p>
+                      <p className="mt-1 text-xs text-slate-500">Try another batch type to view available imports.</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -149,73 +173,78 @@ export default function BatchMasterPage() {
                   const isConfirmed = batch.status === 'CONFIRMED';
                   const isFailed = batch.status === 'FAILED';
                   const isRas = (batch.batchType || '').toUpperCase() === 'RAS';
+                  const isCommitted = batch.status === 'COMMITTED';
 
                   return (
                     <tr
                       key={batch.batchId}
                       onClick={() => handleSelectBatch(batch)}
-                      className="hover:bg-blue-50/40 cursor-pointer transition-colors"
+                      className="group cursor-pointer transition-all duration-200 hover:-translate-y-px hover:drop-shadow-sm"
                     >
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                      <td className="whitespace-nowrap rounded-l-xl border-y border-l border-slate-200/80 bg-white px-4 py-3.5 align-middle font-mono font-bold text-slate-900 transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         #{batch.batchId}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="border-y border-slate-200/80 bg-white px-4 py-3.5 align-middle transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {isRas ? (
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
-                            <Users className="w-3 h-3 text-indigo-500" />
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700">
+                            <Users className="h-3.5 w-3.5 text-indigo-600" />
                             <span>RAS</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">
-                            <Laptop className="w-3 h-3 text-blue-500" />
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700">
+                            <Laptop className="h-3.5 w-3.5 text-blue-600" />
                             <span>Laptop</span>
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-slate-800">
+                      <td className="whitespace-nowrap border-y border-slate-200/80 bg-white px-4 py-3.5 align-middle font-mono font-medium text-slate-700 transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {batch.snapshotDate}
                       </td>
-                      <td className="py-3 px-4 font-medium text-slate-700">
+                      <td className="max-w-[380px] border-y border-slate-200/80 bg-white px-4 py-3.5 align-middle font-medium leading-5 text-slate-700 [overflow-wrap:anywhere] transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {batch.fileName}
                       </td>
-                      <td className="py-3 px-4 text-center font-bold text-slate-900">
+                      <td className="whitespace-nowrap border-y border-slate-200/80 bg-white px-4 py-3.5 text-right align-middle font-semibold tabular-nums text-slate-900 transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {batch.recordCount.toLocaleString()}
                       </td>
-                      <td className="py-3 px-4 text-center font-semibold text-blue-600 bg-blue-50/20">
+                      <td className="whitespace-nowrap border-y border-slate-200/80 bg-white px-4 py-3.5 text-right align-middle font-semibold tabular-nums text-blue-700 transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {batch.newCount}
                       </td>
-                      <td className="py-3 px-4 text-center font-semibold text-amber-600 bg-amber-50/20">
+                      <td className="whitespace-nowrap border-y border-slate-200/80 bg-white px-4 py-3.5 text-right align-middle font-semibold tabular-nums text-amber-700 transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {batch.changedCount}
                       </td>
-                      <td className="py-3 px-4 text-center font-semibold text-emerald-600 bg-emerald-50/20">
+                      <td className="whitespace-nowrap border-y border-slate-200/80 bg-white px-4 py-3.5 text-right align-middle font-semibold tabular-nums text-emerald-700 transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {batch.unchangedCount}
                       </td>
-                      <td className="py-3 px-4 text-center font-semibold text-rose-600 bg-rose-50/20">
+                      <td className="whitespace-nowrap border-y border-slate-200/80 bg-white px-4 py-3.5 text-right align-middle font-semibold tabular-nums text-rose-700 transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {batch.missingCount}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="whitespace-nowrap border-y border-slate-200/80 bg-white px-4 py-3.5 align-middle transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            isConfirmed
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                            isConfirmed || isCommitted
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                               : isFailed
-                              ? 'bg-rose-50 text-rose-700 border border-rose-300'
-                              : 'bg-amber-50 text-amber-700 border border-amber-300'
+                              ? 'border-rose-200 bg-rose-50 text-rose-700'
+                              : 'border-amber-200 bg-amber-50 text-amber-700'
                           }`}
                         >
+                          <span className={`h-1.5 w-1.5 rounded-full ${
+                            isConfirmed || isCommitted ? 'bg-emerald-500' : isFailed ? 'bg-rose-500' : 'bg-amber-500'
+                          }`} />
                           {batch.status}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-slate-500 text-[11px] font-mono">
+                      <td className="whitespace-nowrap border-y border-slate-200/80 bg-white px-4 py-3.5 align-middle font-mono text-[11px] text-slate-500 transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         {new Date(batch.uploadedAt).toLocaleString()}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="rounded-r-xl border-y border-r border-slate-200/80 bg-white px-4 py-3.5 text-center align-middle transition-colors group-hover:border-y-blue-100 group-hover:bg-blue-50/70">
                         <button
                           type="button"
+                          aria-label={`View batch ${batch.batchId}`}
                           onClick={() => handleSelectBatch(batch)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-slate-100 cursor-pointer"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow cursor-pointer"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="h-4 w-4" />
                         </button>
                       </td>
                     </tr>
@@ -228,119 +257,7 @@ export default function BatchMasterPage() {
       </div>
 
       {/* Centered Batch Details Modal */}
-      {selectedBatch && (
-        <div
-          className="fixed inset-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
-          onClick={() => setSelectedBatch(null)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-mono font-bold text-sm text-blue-400">#{selectedBatch.batchId}</span>
-                  <span className="text-sm font-bold text-white">Inspection — {selectedBatch.fileName}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-300">
-                    {selectedBatch.batchType || 'LAPTOP'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Business Snapshot: {selectedBatch.snapshotDate} | Ingested:{' '}
-                  {new Date(selectedBatch.uploadedAt).toLocaleString()}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedBatch(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Metrics Breakdown */}
-            <div className="p-5 bg-slate-50 border-b border-slate-200 grid grid-cols-5 gap-3 text-center text-xs">
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                <span className="text-[10px] uppercase text-slate-400 block">Total Records</span>
-                <span className="text-base font-bold text-slate-800">{selectedBatch.recordCount}</span>
-              </div>
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                <span className="text-[10px] uppercase text-blue-500 block">New Records</span>
-                <span className="text-base font-bold text-blue-600">{selectedBatch.newCount}</span>
-              </div>
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                <span className="text-[10px] uppercase text-amber-500 block">Changed / Actioned</span>
-                <span className="text-base font-bold text-amber-600">{selectedBatch.changedCount}</span>
-              </div>
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                <span className="text-[10px] uppercase text-emerald-500 block">Unchanged</span>
-                <span className="text-base font-bold text-emerald-600">{selectedBatch.unchangedCount}</span>
-              </div>
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200">
-                <span className="text-[10px] uppercase text-rose-500 block">Missing / Exited</span>
-                <span className="text-base font-bold text-rose-600">{selectedBatch.missingCount}</span>
-              </div>
-            </div>
-
-            {/* Staged Rows Sample */}
-            {/* <div className="p-6 flex-1 overflow-y-auto">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                Staged Rows Sample (up to 50 rows)
-              </h4>
-              {loadingDetails ? (
-                <div className="py-8 text-center text-xs text-slate-400">Loading batch records...</div>
-              ) : batchDetails && batchDetails.stagedRows && batchDetails.stagedRows.length > 0 ? (
-                <div className="border border-slate-200 rounded-lg max-h-72 overflow-y-auto">
-                  <table className="w-full text-left text-xs divide-y divide-slate-200">
-                    <thead className="bg-slate-100 text-slate-700 text-[10px] font-semibold uppercase">
-                      <tr>
-                        <th className="py-2 px-3">Serial / ID</th>
-                        <th className="py-2 px-3">Action</th>
-                        <th className="py-2 px-3">Changed Fields</th>
-                        <th className="py-2 px-3">Status</th>
-                        <th className="py-2 px-3">Location</th>
-                        <th className="py-2 px-3">User Name</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
-                      {batchDetails.stagedRows.slice(0, 50).map((row) => (
-                        <tr key={row.batchRowId} className="hover:bg-slate-50">
-                          <td className="py-1.5 px-3 font-mono font-medium">{row.serialNumber}</td>
-                          <td className="py-1.5 px-3">
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100">
-                              {row.changeType || 'STAGED'}
-                            </span>
-                          </td>
-                          <td className="py-1.5 px-3 text-slate-600">{row.changedFields || '—'}</td>
-                          <td className="py-1.5 px-3">{row.status || '—'}</td>
-                          <td className="py-1.5 px-3">{row.location}</td>
-                          <td className="py-1.5 px-3">{row.userName || '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="py-4 text-center text-xs text-slate-400">
-                  No staged laptop rows recorded for this batch.
-                </div>
-              )}
-            </div> */}
-
-            {/* Modal Footer */}
-            <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-end">
-              <button
-                onClick={() => setSelectedBatch(null)}
-                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold rounded-lg cursor-pointer transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+     
     </div>
   );
 }
