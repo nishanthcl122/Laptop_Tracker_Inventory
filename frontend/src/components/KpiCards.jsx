@@ -90,47 +90,76 @@ export default function KpiCards({
               </div>
 
               {isAllocatedExpanded && (
-                <div className="allocation-subgrid">
+                <div
+                  className={`allocation-subgrid ${isInStockExpanded ? 'allocation-subgrid-allocated' : ''
+                    }`}
+                >
                   <button
                     type="button"
                     className="mini-stat success"
-                    onClick={() => onOpenResultsModal({
-                      title: 'RAS Active Laptops',
-                      subtitle: 'Allocated laptops whose assigned rsource is present in latest RAS dump',
-                      filters: { status: 'Allocated', rasStatus: 'ACTIVE', isLost: false }
-                    })}
+                    onClick={() =>
+                      onOpenResultsModal({
+                        title: 'RAS Active Laptops',
+                        subtitle:
+                          'Allocated laptops whose assigned resource is present in latest RAS dump',
+                        filters: {
+                          status: 'Allocated',
+                          rasStatus: 'ACTIVE',
+                          isLost: false,
+                        },
+                      })
+                    }
                   >
-                    <span className="mini-stat-label"><span className="dot green" />Active</span>
+                    <span className="mini-stat-label">
+                      <span className="dot green" />
+                      Active
+                    </span>
                     <strong>{rasActiveCount.toLocaleString()}</strong>
-                    {/* <small>According to RAS Data</small> */}
                   </button>
 
                   <button
                     type="button"
                     className="mini-stat danger"
-                    onClick={() => onOpenResultsModal({
-                      title: 'Lost Laptops',
-                      subtitle: '',
-                      filters: { status: 'Allocated', rasStatus: 'LOST', isLost: true }
-                    })}
+                    onClick={() =>
+                      onOpenResultsModal({
+                        title: 'Lost Laptops',
+                        subtitle: '',
+                        filters: {
+                          status: 'Allocated',
+                          rasStatus: 'LOST',
+                          isLost: true,
+                        },
+                      })
+                    }
                   >
-                    <span className="mini-stat-label"><span className="dot red" />Lost</span>
+                    <span className="mini-stat-label">
+                      <span className="dot red" />
+                      Lost
+                    </span>
                     <strong>{lostCount.toLocaleString()}</strong>
-                    {/* <small></small> */}
                   </button>
 
                   <button
                     type="button"
                     className="mini-stat warning"
-                    onClick={() => onOpenResultsModal({
-                      title: 'Not in UHG Laptops',
-                      subtitle: 'Allocated laptops whose assigned resource datails missing in latest RAS dump',
-                      filters: { status: 'Allocated', rasStatus: 'NOT_IN_UHG', isLost: false }
-                    })}
+                    onClick={() =>
+                      onOpenResultsModal({
+                        title: 'Not in UHG Laptops',
+                        subtitle:
+                          'Allocated laptops whose assigned resource details are missing in latest RAS dump',
+                        filters: {
+                          status: 'Allocated',
+                          rasStatus: 'NOT_IN_UHG',
+                          isLost: false,
+                        },
+                      })
+                    }
                   >
-                    <span className="mini-stat-label"><span className="dot amber" />Not in UHG</span>
+                    <span className="mini-stat-label">
+                      <span className="dot amber" />
+                      Not in UHG
+                    </span>
                     <strong>{notInUhgCount.toLocaleString()}</strong>
-                    {/* <small>Exited</small> */}
                   </button>
                 </div>
               )}
@@ -159,31 +188,51 @@ export default function KpiCards({
               </div>
 
               {isInStockExpanded && (
-                <div className="allocation-subgrid">
-                  {locationBreakdown.length > 0 ? (
-                    locationBreakdown.map((item) => (
-                      <button
-                        key={item.location}
-                        type="button"
+                <div className="allocation-subgrid-container">
+                  <div className="allocation-subgrid">
+                    {locationBreakdown.length > 0 ? (
+                      locationBreakdown.map((item) => (
+                        <button
+                          key={item.location}
+                          type="button"
+                          className="mini-stat success"
+                          onClick={() =>
+                            onOpenResultsModal({
+                              title: `In Stock Laptops in ${item.location}`,
+                              subtitle: `Laptops currently in stock at ${item.location}`,
+                              filters: {
+                                status: 'In Stock',
+                                location: item.location,
+                              },
+                            })
+                          }
+                        >
+                          <span className="mini-stat-label">
+                            <span className="dot green" />
+                            {item.location}
+                          </span>
+
+                          <strong>{item.count.toLocaleString()}</strong>
+
+                          {/* <small>In stock</small> */}
+                        </button>
+                      ))
+                    ) : (
+                      <div
                         className="mini-stat success"
-                        onClick={() => onOpenResultsModal({
-                          title: `In Stock Laptops in ${item.location}`,
-                          subtitle: `Laptops currently in stock at ${item.location}`,
-                          filters: { status: 'In Stock', location: item.location }
-                        })}
+                        style={{ gridColumn: '1 / -1' }}
                       >
-                        <span className="mini-stat-label"><span className="dot green" />{item.location}</span>
-                        <strong>{item.count.toLocaleString()}</strong>
+                        <span className="mini-stat-label">
+                          <span className="dot green" />
+                          No location data
+                        </span>
+
+                        <strong>0</strong>
+
                         <small>In stock</small>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="mini-stat success" style={{ gridColumn: '1 / -1' }}>
-                      <span className="mini-stat-label"><span className="dot green" />No location data</span>
-                      <strong>0</strong>
-                      <small>In stock</small>
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

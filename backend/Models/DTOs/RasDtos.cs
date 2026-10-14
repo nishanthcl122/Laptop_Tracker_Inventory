@@ -6,7 +6,7 @@ namespace LaptopTracking.Api.Models.DTOs;
 public class RasPreviewDto
 {
     public int BatchId { get; set; }
-    public string BatchType { get; set; } = "RAS";
+    public string BatchType { get; set; } = ImportBatchTypes.Ras;
     public string Mode { get; set; } = "INITIAL"; // "INITIAL" | "RECONCILIATION"
     public bool PreviousBaselineExists { get; set; }
     public DateOnly SnapshotDate { get; set; }

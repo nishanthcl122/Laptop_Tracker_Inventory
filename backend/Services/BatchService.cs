@@ -23,16 +23,16 @@ public class BatchService
         _db = db;
     }
 
-    public async Task<List<ImportBatch>> GetBatchesAsync()
+    public async Task<List<ImportBatch>> GetBatchesAsync(CancellationToken cancellationToken)
     {
         return await _db.ImportBatches
             .AsNoTracking()
             .OrderByDescending(b => b.SnapshotDate)
             .ThenByDescending(b => b.UploadedAt)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<BatchSummaryDto?> GetBatchDetailsAsync(int batchId)
+    public async Task<BatchSummaryDto?> GetBatchDetailsAsync(int batchId, CancellationToken cancellationToken)
     {
         var batch = await _db.ImportBatches.AsNoTracking().FirstOrDefaultAsync(b => b.BatchId == batchId);
         if (batch == null) return null;
@@ -40,13 +40,13 @@ public class BatchService
         var rows = await _db.ImportBatchRows
             .AsNoTracking()
             .Where(r => r.BatchId == batchId)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var rasRows = await _db.RASHistoricals
             .AsNoTracking()
             .Where(r => r.BatchId == batchId)
             .Take(100)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return new BatchSummaryDto
         {

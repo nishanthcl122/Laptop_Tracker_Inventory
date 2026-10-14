@@ -232,7 +232,7 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Select Laptop File (.xlsx, .xls, .csv)
+                      Select Laptop File (.xlsx)
                     </label>
                     <input
                       type="file"
@@ -514,7 +514,7 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Select Latest RAS File (.xlsx, .xls, .csv)
+                      Select Latest RAS File (.xlsx)
                     </label>
                     <input
                       type="file"

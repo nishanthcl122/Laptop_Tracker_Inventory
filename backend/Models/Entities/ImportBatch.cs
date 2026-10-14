@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using LaptopTracking.Api.Models;
 
 namespace LaptopTracking.Api.Models.Entities;
 
 public class ImportBatch
 {
     public int BatchId { get; set; }
-    public string BatchType { get; set; } = "LAPTOP"; // LAPTOP, RAS
+    public string BatchType { get; set; } = ImportBatchTypes.Laptop;
     public DateOnly SnapshotDate { get; set; }
     public string FileName { get; set; } = string.Empty;
     public int RecordCount { get; set; }
@@ -15,7 +16,7 @@ public class ImportBatch
     public int UnchangedCount { get; set; }
     public int MissingCount { get; set; }
     public int ErrorCount { get; set; }
-    public string Status { get; set; } = "STAGED"; // STAGED, CONFIRMED, COMMITTED, FAILED
+    public string Status { get; set; } = ImportBatchStatuses.Staged;
     public string? ImportMode { get; set; } // INITIAL, RECONCILIATION
     public DateTimeOffset UploadedAt { get; set; } = DateTimeOffset.UtcNow;
 
