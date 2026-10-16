@@ -47,7 +47,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
     setSearch(initialSrch);
     setColumnFilters({});
     setPage(1);
-  }, [initialLoc, initialWbs, initialBilling, initialSrch]);
+  }, [initialLoc, initialWbs, initialBilling, initialSrch, initialProj, initialBand]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -102,6 +102,8 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
   };
 
   const handleColumnFilterChange = (columnKey, vals) => {
+    console.log(columnKey, vals);
+
     setColumnFilters((prev) => ({
       ...prev,
       [columnKey]: vals
@@ -337,7 +339,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                     <ExcelColumnFilter
                       title="SAP ID"
                       columnKey="sapId"
-                      selectedValues={columnFilters?.sapId}
+                      selectedValues={columnFilters?.sapId ?? []}
                       options={uniqueSapIds}
                       onApply={(vals) => handleColumnFilterChange('sapId', vals)}
                     />
@@ -353,7 +355,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                     <ExcelColumnFilter
                       title="Employee Name"
                       columnKey="employeeName"
-                      selectedValues={columnFilters?.employeeName}
+                      selectedValues={columnFilters?.employeeName ?? []}
                       options={uniqueNames}
                       onApply={(vals) => handleColumnFilterChange('employeeName', vals)}
                     />
@@ -369,7 +371,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                     <ExcelColumnFilter
                       title="ProjectName"
                       columnKey="projectName"
-                      selectedValues={columnFilters?.projectName}
+                      selectedValues={columnFilters?.projectName ?? []}
                       options={uniqueProject}
                       onApply={(vals) => handleColumnFilterChange('projectName', vals)}
                     />
@@ -385,7 +387,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                     <ExcelColumnFilter
                       title="Band"
                       columnKey="band"
-                      selectedValues={columnFilters?.band}
+                      selectedValues={columnFilters?.band ?? []}
                       options={uniqueBands}
                       onApply={(vals) => handleColumnFilterChange('band', vals)}
                     />
@@ -402,7 +404,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                     <ExcelColumnFilter
                       title="WBS Type"
                       columnKey="wbsType"
-                      selectedValues={columnFilters?.wbsType}
+                      selectedValues={columnFilters?.wbsType ?? []}
                       options={uniqueWbsTypes}
                       onApply={(vals) => handleColumnFilterChange('wbsType', vals)}
                     />
@@ -418,7 +420,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                     <ExcelColumnFilter
                       title="Location"
                       columnKey="location"
-                      selectedValues={columnFilters?.location}
+                      selectedValues={columnFilters?.location ?? []}
                       options={uniqueLocations}
                       onApply={(vals) => handleColumnFilterChange('location', vals)}
                     />
@@ -460,7 +462,7 @@ export default function RasIdleModal({ onClose, initialLocation = 'ALL', initial
                 ))
               ) : displayedEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-16 px-6">
+                  <td colSpan="8" className="py-16 px-6">
                     <div className="mx-auto flex max-w-sm flex-col items-center text-center">
                       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 to-slate-50 text-purple-500 shadow-sm">
                         <UserMinus className="h-8 w-8 stroke-[1.5]" />

@@ -113,8 +113,6 @@ public class RasReconciliationService
                 // ==========================================
                 // Load full previous RAS records before deleting them to capture previous accepted state
                 var previousRasRows = await _db.RASCurrents.AsNoTracking().ToListAsync(cancellationToken);
-                var previousRasSaps = previousRasRows.Select(r => r.EmployeeCode).Distinct().ToList();
-                var prevSet = new HashSet<string>(previousRasSaps, StringComparer.OrdinalIgnoreCase);
 
                 var previousRasRepByEmployee = previousRasRows
                     .GroupBy(r => r.EmployeeCode, StringComparer.OrdinalIgnoreCase)
@@ -151,17 +149,17 @@ public class RasReconciliationService
 
                 foreach (var lap in allocatedLaptops)
                 {
-                    if (lap.IsLost)
+                    bool isCurrentlyActive = string.Equals(lap.RASStatus?.Trim(), RasStatuses.Active, StringComparison.OrdinalIgnoreCase);
+                    if (lap.IsLost && !isCurrentlyActive)
                     {
                         // Stays Lost permanently even if employee reappears
                         lap.RASStatus = RasStatuses.Lost;
                         continue;
                     }
 
-                    bool wasInPrevRas = prevSet.Contains(lap.SAPId!);
-                    bool inNewRas = incomingSapSet.Contains(lap.SAPId!);
+                    bool inNewRas = incomingSapSet.Contains(lap.SAPId!.Trim());
 
-                    if (wasInPrevRas && !inNewRas)
+                    if (isCurrentlyActive && !inNewRas)
                     {
                         // Transition to NOT_IN_UHG. Remains Status = ALLOCATED, never move to In Stock, do not clear SAP or UserName.
                         if (lap.RASStatus != RasStatuses.NotInUhg)
@@ -201,6 +199,7 @@ public class RasReconciliationService
                         }
 
                         lap.RASStatus = RasStatuses.NotInUhg;
+                        lap.IsLost = false;
                         lap.UpdatedAt = DateTimeOffset.UtcNow;
                     }
                     else if (inNewRas)
