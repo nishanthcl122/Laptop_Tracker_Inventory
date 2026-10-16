@@ -10,6 +10,8 @@ const client = axios.create({
 export const api = {
   // Dashboard
   getDashboardSummary: () => client.get('/dashboard/summary').then(res => res.data),
+  getActualInventoryLocationSummary: () => client.get('/actual-inventory/location-summary').then(res => res.data),
+  getActualInventoryLocation: (location) => client.get(`/actual-inventory/location/${encodeURIComponent(location)}`).then(res => res.data),
   getRasIdleEmployees: (params) => client.get('/dashboard/ras-idle-employees', { params }).then(res => res.data),
   getLaptopsByLocation: (location) => client.get('/dashboard/laptops-by-location', { params: { location } }).then(res => res.data),
 
@@ -42,5 +44,10 @@ export const api = {
   }).then(res => res.data),
   confirmRas: (batchId) => client.post('/ras/confirm', { batchId }).then(res => res.data),
   getCurrentRas: (params) => client.get('/ras/current', { params }).then(res => res.data),
-  getRasRecord: (sapId) => client.get(`/ras/records/${encodeURIComponent(sapId)}`).then(res => res.data)
+  getRasRecord: (sapId) => client.get(`/ras/records/${encodeURIComponent(sapId)}`).then(res => res.data),
+
+  // Actual Inventory
+  uploadActualInventory: (formData) => client.post('/actual-inventory/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(res => res.data)
 };

@@ -16,6 +16,8 @@ public class LaptopDbContext : DbContext
     public DbSet<RASCurrent> RASCurrents => Set<RASCurrent>();
     public DbSet<RASHistorical> RASHistoricals => Set<RASHistorical>();
     public DbSet<RasDeemedUnbillable> RasDeemedUnbillables => Set<RasDeemedUnbillable>();
+    public DbSet<ActualInventoryUpload> ActualInventoryUploads => Set<ActualInventoryUpload>();
+    public DbSet<ActualInventoryRow> ActualInventoryRows => Set<ActualInventoryRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -141,6 +143,29 @@ public class LaptopDbContext : DbContext
             entity.Property(e => e.EmployeeCode).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Remarks).HasMaxLength(500);
             entity.HasIndex(e => e.EmployeeCode).IsUnique();
+        });
+
+        modelBuilder.Entity<ActualInventoryUpload>(entity =>
+        {
+            entity.ToTable("ActualInventoryUploads");
+            entity.HasKey(e => e.BatchId);
+            entity.Property(e => e.FileName).HasMaxLength(255).IsRequired();
+            entity.HasIndex(e => e.UploadedAt);
+        });
+
+        modelBuilder.Entity<ActualInventoryRow>(entity =>
+        {
+            entity.ToTable("ActualInventoryRows");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FbrId).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.PoNumber).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Location).HasMaxLength(150).IsRequired();
+            entity.HasOne(e => e.Upload)
+                .WithMany(e => e.Rows)
+                .HasForeignKey(e => e.BatchId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.BatchId);
+            entity.HasIndex(e => e.Location);
         });
     }
 }

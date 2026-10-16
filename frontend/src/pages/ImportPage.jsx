@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   UploadCloud, CheckCircle2, AlertTriangle, XCircle,
   ShieldCheck, RefreshCw, Laptop, Users, AlertOctagon,
-  Eye, X, FileSpreadsheet, Info
+  Eye, X, FileSpreadsheet, Info, Package
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -14,7 +14,7 @@ function isValidSpreadsheetFile(file) {
 }
 
 export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
-  const [activeTab, setActiveTab] = useState(initialTab); // 'laptop' | 'ras'
+  const [activeTab, setActiveTab] = useState(initialTab); // 'laptop' | 'ras' | 'actual-inventory'
 
   // Laptop Import State
   const [laptopFile, setLaptopFile] = useState(null);
@@ -34,6 +34,14 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
   const [rasResult, setRasResult] = useState(null);
   const [rasError, setRasError] = useState(null);
   const [selectedRowDetail, setSelectedRowDetail] = useState(null);
+
+  // Actual Inventory Import State
+  const [actualInventoryFile, setActualInventoryFile] = useState(null);
+  const [actualInventorySnapshotDate, setActualInventorySnapshotDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [actualInventoryLoading, setActualInventoryLoading] = useState(false);
+  const [actualInventoryResult, setActualInventoryResult] = useState(null);
+  const [actualInventoryError, setActualInventoryError] = useState(null);
+  const [actualInventoryInputKey, setActualInventoryInputKey] = useState(0);
 
   // --- Handlers for Laptop Import ---
   const handleLaptopUpload = async (e) => {
@@ -133,6 +141,38 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
     setRasError(null);
   };
 
+  const handleActualInventoryUpload = async (e) => {
+    e.preventDefault();
+    if (!actualInventoryFile) {
+      setActualInventoryError('Please select an Actual Inventory Excel file.');
+      return;
+    }
+
+    setActualInventoryLoading(true);
+    setActualInventoryError(null);
+    const formData = new FormData();
+    formData.append('file', actualInventoryFile);
+    formData.append('snapshotDate', actualInventorySnapshotDate);
+
+    try {
+      const result = await api.uploadActualInventory(formData);
+      setActualInventoryResult(result);
+      if (onImportSuccess) onImportSuccess();
+    } catch (err) {
+      console.error(err);
+      setActualInventoryError(err.response?.data?.message || 'Failed to upload Actual Inventory file.');
+    } finally {
+      setActualInventoryLoading(false);
+    }
+  };
+
+  const handleActualInventoryReset = () => {
+    setActualInventoryFile(null);
+    setActualInventoryResult(null);
+    setActualInventoryError(null);
+    setActualInventoryInputKey((key) => key + 1);
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Page Header */}
@@ -146,7 +186,7 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
       </div>
 
       {/* Mode Switcher Tabs */}
-      <div className="flex items-center space-x-2 border-b border-slate-200">
+      <div className="flex flex-wrap items-center space-x-2 border-b border-slate-200">
         <button
           type="button"
           onClick={() => setActiveTab('laptop')}
@@ -171,6 +211,19 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
         >
           <Users className="w-4 h-4" />
           <span>RAS File Upload</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('actual-inventory')}
+          className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+            activeTab === 'actual-inventory'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          <span>Actual Inventory Upload</span>
         </button>
       </div>
 
@@ -457,17 +510,128 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
       )}
 
       {/* ======================= TAB 2: RAS EXCEL ======================= */}
-      {activeTab === 'ras' && (
-        <div className="space-y-5">
-          {rasError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center space-x-2 text-xs text-rose-800">
-              <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-              <span>{rasError}</span>
-            </div>
+
+      {activeTab === 'actual-inventory' && (
+            <div className="space-y-5">
+              {actualInventoryError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center space-x-2 text-xs text-rose-800">
+                  <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{actualInventoryError}</span>
+                </div>
+              )}
+
+              {actualInventoryResult?.success ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-3">
+                  <div className="flex items-center space-x-2 text-emerald-800 font-semibold text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    <span>{actualInventoryResult.message}</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="bg-white p-2 rounded-lg border border-emerald-100">
+                      <span className="text-[10px] text-slate-400 block uppercase">Snapshot Date</span>
+                      <span className="font-bold text-slate-800">{actualInventoryResult.snapshotDate}</span>
+                    </div>
+                    <div className="bg-white p-2 rounded-lg border border-emerald-100">
+                      <span className="text-[10px] text-slate-400 block uppercase">Inventory Rows</span>
+                      <span className="font-bold text-slate-800">{actualInventoryResult.recordCount}</span>
+                    </div>
+                    <div className="bg-white p-2 rounded-lg border border-emerald-100">
+                      <span className="text-[10px] text-slate-400 block uppercase">Upload Batch</span>
+                      <span className="font-bold text-slate-800">#{actualInventoryResult.batchId}</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={handleActualInventoryReset}
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold cursor-pointer"
+                    >
+                      Upload Another Actual Inventory File
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-3">
+                  <form onSubmit={handleActualInventoryUpload} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Select Actual Inventory File (.xlsx)
+                        </label>
+                        <input
+                          key={actualInventoryInputKey}
+                          type="file"
+                          accept=".xlsx"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            setActualInventoryResult(null);
+                            if (!file) {
+                              setActualInventoryFile(null);
+                              setActualInventoryError(null);
+                              return;
+                            }
+                            if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                              setActualInventoryFile(null);
+                              e.target.value = '';
+                              setActualInventoryError('Only Excel (.xlsx) files are allowed.');
+                              return;
+                            }
+                            setActualInventoryFile(file);
+                            setActualInventoryError(null);
+                          }}
+                          className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-300 rounded-lg p-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Business Snapshot Date
+                        </label>
+                        <input
+                          type="date"
+                          value={actualInventorySnapshotDate}
+                          onChange={(e) => setActualInventorySnapshotDate(e.target.value)}
+                          className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <button
+                        type="submit"
+                        disabled={!actualInventoryFile || actualInventoryLoading}
+                        className="inline-flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors cursor-pointer"
+                      >
+                        {actualInventoryLoading ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Uploading Actual Inventory...</span>
+                          </>
+                        ) : (
+                          <>
+                            <UploadCloud className="w-4 h-4" />
+                            <span>Upload Actual Inventory</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+        </div>
           )}
 
-          {/* Success Banner */}
-          {rasResult && rasResult.success && (
+          {activeTab === 'ras' && (
+            <div className="space-y-5">
+              {rasError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center space-x-2 text-xs text-rose-800">
+                  <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{rasError}</span>
+                </div>
+              )}
+
+              {/* Success Banner */}
+              {rasResult && rasResult.success && (
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-3">
               <div className="flex items-center space-x-2 text-emerald-800 font-semibold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />

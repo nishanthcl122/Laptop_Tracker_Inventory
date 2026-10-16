@@ -56,10 +56,10 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
               e.stopPropagation();
               onOpenModal({});
             }}
-            className="total-assets-value hover:cursor-pointer"
+            className="allocation-value hover:cursor-pointer"
             title="View all unallocated RAS resource"
           >
-            <span className='font-medium'>{total.toLocaleString()}</span>
+            {total.toLocaleString()}
           </button>
           <span className="collapse-indicator">
             <ChevronDown
@@ -99,7 +99,7 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                     </span>
                   </div>
                   <div className="mt-2 flex items-baseline justify-between">
-                    <span className="text-lg font-bold tracking-tight text-slate-900 group-hover:text-sky-950 font-mono">
+                    <span className="allocation-value group-hover:text-sky-950">
                       {onsiteCount.toLocaleString()}
                     </span>
                     {/* <span className="text-[11px] text-slate-400 font-medium">
@@ -122,7 +122,7 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                     </span>
                   </div>
                   <div className="mt-2 flex items-baseline justify-between">
-                    <span className="text-lg font-bold tracking-tight text-slate-900 group-hover:text-emerald-950 font-mono">
+                    <span className="allocation-value group-hover:text-emerald-950">
                       {nearshoreCount.toLocaleString()}
                     </span>
                     {/* <span className="text-[11px] text-slate-400 font-medium">
@@ -149,7 +149,7 @@ export default function RasIdleHierarchy({ totalCount = 0, breakdown, onOpenModa
                     </div>
 
                     <div className="offshore-value-wrap">
-                      <strong>{offshoreTotal.toLocaleString()}</strong>
+                      <strong className="allocation-value">{offshoreTotal.toLocaleString()}</strong>
 
                       <ChevronDown
                         className={`w-4 h-4 transition-transform duration-200 ${isOffshoreExpanded ? 'rotate-0' : '-rotate-90'
