@@ -547,7 +547,7 @@ public class RasImportService
             batch.UnchangedCount = incomingSapSet.Count(s => prevSapSet.Contains(s));
 
             // Affected Allocated Laptops:
-            // Only laptops whose assigned SAP was in previous RAS and is now absent from new RAS, and is not already Lost
+            // Only currently active allocated laptops whose assigned SAP is absent from the new RAS file
             var prevRasLwds = await _db.RASCurrents
                 .Where(r => r.LastWorkingDay.HasValue)
                 .GroupBy(r => r.EmployeeCode)
@@ -565,14 +565,15 @@ public class RasImportService
             var affectedList = new List<AffectedLaptopDto>();
             foreach (var lap in allocatedLaptops)
             {
-                if (lap.IsLost) continue;
+                bool isCurrentlyActive = string.Equals(lap.RASStatus?.Trim(), RasStatuses.Active, StringComparison.OrdinalIgnoreCase);
+                if (lap.IsLost && !isCurrentlyActive) continue;
 
-                bool wasInPrevRas = prevSapSet.Contains(lap.SAPId!);
-                bool inNewRas = incomingSapSet.Contains(lap.SAPId!);
-                DateOnly? lapLwd = incomingRasLwds.TryGetValue(lap.SAPId!, out var incLwd) ? incLwd :
-                                  prevRasLwds.TryGetValue(lap.SAPId!, out var pLwd) ? pLwd : null;
+                string sapId = lap.SAPId!.Trim();
+                bool inNewRas = incomingSapSet.Contains(sapId);
+                DateOnly? lapLwd = incomingRasLwds.TryGetValue(sapId, out var incLwd) ? incLwd :
+                                  prevRasLwds.TryGetValue(sapId, out var pLwd) ? pLwd : null;
 
-                if (wasInPrevRas && !inNewRas)
+                if (isCurrentlyActive && !inNewRas)
                 {
                     affectedList.Add(new AffectedLaptopDto
                     {
@@ -806,4 +807,3 @@ public class RasImportService
         return null;
     }
 }
-

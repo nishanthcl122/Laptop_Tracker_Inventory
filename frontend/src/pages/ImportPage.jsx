@@ -742,8 +742,8 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
                     <span className="text-xl font-bold text-slate-700">{rasPreview.exitedEmployees ?? rasPreview.missingEmployeesCount}</span>
                   </div>
                   <div className="p-3 bg-amber-50/80 rounded-lg border border-amber-300 text-center">
-                    <span className="text-[10px] font-bold uppercase text-amber-800 block">Laptops To In-Stock</span>
-                    <span className="text-xl font-bold text-amber-700">{rasPreview.laptopsToInStock ?? rasPreview.affectedLaptopsCount}</span>
+                    <span className="text-[10px] font-bold uppercase text-amber-800 block">Laptops To Not in UHG</span>
+                    <span className="text-xl font-bold text-amber-700">{rasPreview.affectedLaptopsCount ?? 0}</span>
                   </div>
                 </div>
               )}
@@ -814,7 +814,7 @@ export default function ImportPage({ initialTab = 'laptop', onImportSuccess }) {
                   <div className="flex items-center space-x-2">
                     <AlertOctagon className="w-4 h-4 text-amber-600" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                      Laptops Transitioning to IN_STOCK ({rasPreview.affectedLaptopsCount || 0})
+                      Laptops Transitioning from ACTIVE to NOT IN UHG ({rasPreview.affectedLaptopsCount || 0})
                     </h3>
                   </div>
 
