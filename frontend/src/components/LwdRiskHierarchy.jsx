@@ -61,7 +61,7 @@ export default function LwdRiskHierarchy({ totalCount = 0, breakdown = [], onOpe
               e.stopPropagation();
               onOpenModal(null);
             }}
-            className="total-assets-value  cursor-pointer"
+            className="allocation-value cursor-pointer"
             title="View all upcoming LWD risk laptops"
           >
             {totalCount.toLocaleString()}

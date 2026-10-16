@@ -3,10 +3,14 @@ import KpiCards from '../components/KpiCards';
 import LaptopResultsModal from '../components/LaptopResultsModal';
 import AuditModal from '../components/AuditModal';
 import RasIdleModal from '../components/RasIdleModal';
+import ActualInventoryModal from '../components/ActualInventoryModal';
 import { api } from '../services/api';
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState(null);
+  const [actualInventoryLocations, setActualInventoryLocations] = useState(null);
+  const [actualInventoryError, setActualInventoryError] = useState(null);
+  const [selectedActualInventoryLocation, setSelectedActualInventoryLocation] = useState(null);
 
   // Centered Laptop Results Modal state
   const [resultsModal, setResultsModal] = useState({
@@ -35,6 +39,16 @@ export default function DashboardPage() {
   // Load Dashboard Summary
   const loadDashboardMetrics = () => {
     api.getDashboardSummary().then(setSummary).catch(console.error);
+    api.getActualInventoryLocationSummary()
+      .then((locations) => {
+        setActualInventoryLocations(locations);
+        setActualInventoryError(null);
+      })
+      .catch((error) => {
+        console.error('Failed to load actual inventory summary', error);
+        setActualInventoryLocations(null);
+        setActualInventoryError('Actual inventory could not be loaded.');
+      });
   };
 
   useEffect(() => {
@@ -122,6 +136,9 @@ export default function DashboardPage() {
       {/* 1. Top KPI Hierarchy Cards (Laptop Fleet & RAS Signals) */}
       <KpiCards
         summary={summary}
+        actualInventoryLocations={actualInventoryLocations}
+        actualInventoryError={actualInventoryError}
+        onOpenActualInventoryLocation={setSelectedActualInventoryLocation}
         onOpenResultsModal={openResultsModal}
         onOpenRasIdleModal={openRasIdleModal}
         onOpenLwdRiskModal={handleOpenLwdRiskModal}
@@ -153,6 +170,13 @@ export default function DashboardPage() {
           initialFilters={rasIdleFilters}
           initialLocation={rasIdleFilters.location || 'ALL'}
           onClose={() => setRasIdleModalOpen(false)}
+        />
+      )}
+
+      {selectedActualInventoryLocation && (
+        <ActualInventoryModal
+          location={selectedActualInventoryLocation}
+          onClose={() => setSelectedActualInventoryLocation(null)}
         />
       )}
     </div>

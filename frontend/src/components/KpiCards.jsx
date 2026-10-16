@@ -13,11 +13,15 @@ export default function KpiCards({
   summary,
   onOpenResultsModal,
   onOpenRasIdleModal,
-  onOpenLwdRiskModal
+  onOpenLwdRiskModal,
+  actualInventoryLocations,
+  actualInventoryError,
+  onOpenActualInventoryLocation
 }) {
   const [isTotalExpanded, setIsTotalExpanded] = useState(true);
   const [isAllocatedExpanded, setIsAllocatedExpanded] = useState(true);
   const [isInStockExpanded, setIsInStockExpanded] = useState(true);
+  const [isActualInventoryExpanded, setIsActualInventoryExpanded] = useState(true);
 
   const totalCount = summary?.totalLaptops ?? 0;
   const allocatedCount = summary?.allocatedLaptops ?? 0;
@@ -28,6 +32,8 @@ export default function KpiCards({
   const notInUhgCount = summary?.notInUhg ?? 0;
   const rasIdleCount = summary?.rasIdle ?? 0;
   const lwd15Count = summary?.lwdApproaching15Days ?? 0;
+  const actualInventoryCount = (actualInventoryLocations || [])
+    .reduce((total, item) => total + item.actualStock, 0);
 
   return (
     <div className="kpi-section">
@@ -58,7 +64,7 @@ export default function KpiCards({
           </div>
 
           <div className="total-assets-value-wrap">
-            <strong className="total-assets-value">{totalCount.toLocaleString()}</strong>
+            <strong className="allocation-value">{totalCount.toLocaleString()}</strong>
             <span className="collapse-indicator">
               <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isTotalExpanded ? 'rotate-0' : '-rotate-90'}`} />
             </span>
@@ -90,10 +96,7 @@ export default function KpiCards({
               </div>
 
               {isAllocatedExpanded && (
-                <div
-                  className={`allocation-subgrid ${isInStockExpanded ? 'allocation-subgrid-allocated' : ''
-                    }`}
-                >
+                <div className="allocation-subgrid">
                   <button
                     type="button"
                     className="mini-stat success"
@@ -236,7 +239,7 @@ export default function KpiCards({
                 </div>
               )}
 
-              <div
+              {/* <div
                 className="in-stock-footer"
                 onClick={() => onOpenResultsModal({
                   title: 'In Stock Laptops',
@@ -247,7 +250,58 @@ export default function KpiCards({
               >
                 <span>View inventory</span>
                 <ExternalLink className="w-3.5 h-3.5" />
+              </div> */}
+            </div>
+
+            <div className="in-stock-card actual-inventory-card">
+              <div
+                onClick={() => setIsActualInventoryExpanded((prev) => !prev)}
+                className="allocation-header"
+                title={isActualInventoryExpanded ? 'Click to collapse breakdown' : 'Click to expand breakdown'}
+              >
+                <div className="allocation-header-copy">
+                  <span className="in-stock-icon">
+                    <Package className="w-4 h-4 text-fuchsia-400" />
+                  </span>
+                  <div>
+                    <p className="allocation-label">Actual Inventory</p>
+                  </div>
+                </div>
+
+                <div className="allocation-value-wrap">
+                  <strong className="allocation-value">{actualInventoryCount.toLocaleString()}</strong>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isActualInventoryExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                </div>
               </div>
+
+              {isActualInventoryExpanded && (
+                <div className="allocation-subgrid-container">
+                  {actualInventoryError ? (
+                    <p className="py-4 text-center text-xs text-rose-700">{actualInventoryError}</p>
+                  ) : actualInventoryLocations === null ? (
+                    <p className="py-4 text-center text-xs text-slate-500">Loading actual inventory...</p>
+                  ) : actualInventoryLocations.length > 0 ? (
+                    <div className="allocation-subgrid ">
+                      {actualInventoryLocations.map((item) => (
+                        <button
+                          key={item.location}
+                          type="button"
+                          className="mini-stat fuchsia"
+                          onClick={() => onOpenActualInventoryLocation(item.location)}
+                        >
+                          <span className="mini-stat-label">
+                            <span className="dot fuchsia" />
+                            {item.location}
+                          </span>
+                          <strong>{item.actualStock.toLocaleString()}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-4 text-center text-xs text-slate-500">No actual inventory uploaded.</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

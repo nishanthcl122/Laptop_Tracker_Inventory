@@ -318,15 +318,6 @@
   gap: 0.75rem;
 }
 
-.total-assets-value {
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
 .collapse-indicator {
   width: 1.8rem;
   height: 1.8rem;
@@ -340,9 +331,10 @@
 
  .fleet-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
   margin-top: 1rem;
+  align-items: start;
 }
 
 .allocation-card,
@@ -353,8 +345,20 @@
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
+.actual-inventory-card {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .allocation-card {
   padding: 0.9rem;
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.in-stock-card:not(.actual-inventory-card) {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .allocation-header {
@@ -411,7 +415,9 @@
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: -0.04em;
+  line-height: 1;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .allocation-subgrid {
@@ -426,51 +432,16 @@
   width: 100%;
 }
 
-/* Allocated section when In Stock is expanded */
-.allocation-subgrid-allocated {
-  grid-template-columns: 1fr !important;
-}
-
-.allocation-subgrid-allocated .mini-stat {
-  width: 100%;
-  min-height: 90px;
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 1rem 1.25rem;
-}
-
-.allocation-subgrid-allocated .mini-stat-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.allocation-subgrid-allocated .mini-stat strong {
-  font-size: 1.125rem;
-  font-weight: 700;
-  line-height: 1;
-  color: #0f172a;
-}
-
-/* Nice visual accent */
-.allocation-subgrid-allocated .mini-stat.success,
-.allocation-subgrid-allocated .mini-stat.danger,
-.allocation-subgrid-allocated .mini-stat.warning {
-  border-left: 1px solid rgba(148, 163, 184, 0.2);
-}
-
 .allocation-subgrid .mini-stat.success:hover {
   background: rgba(16, 185, 129, 0.05);
   border-color: rgba(16, 185, 129, 0.25);
   border-left: 4px solid #10b981;
+}
+
+.allocation-subgrid .mini-stat.fuchsia:hover {
+  background: rgba(245, 136, 192, 0.05);
+  border-color: rgba(245, 136, 192, 0.25);
+  border-left: 4px solid #f588c0;
 }
 
 .allocation-subgrid .mini-stat.danger:hover {
@@ -597,6 +568,9 @@
 .dot.green { background: var(--success); }
 .dot.red { background: var(--danger); }
 .dot.amber { background: var(--warning); }
+.dot.fuchsia{
+  background: #f588c0;
+}
 
 .mini-stat strong {
   font-size: 1rem;
@@ -753,14 +727,6 @@
 .metric-subtitle {
   margin-top: 0.18rem;
   line-height: 1.4;
-}
-
-.metric-value {
-  font-size: clamp(1.4rem, 2.6vw, 2rem);
-  line-height: 1;
-  letter-spacing: -0.05em;
-  color: var(--text);
-  font-weight: 700;
 }
 
 .metric-footer-row {
@@ -1349,12 +1315,6 @@
   gap: 8px;
 }
 
-.offshore-unbillable-header .allocation-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
 .offshore-kpi:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
@@ -1555,6 +1515,25 @@
 
   .fleet-grid {
     grid-template-columns: 1fr;
+  }
+
+  .allocation-card,
+  .in-stock-card:not(.actual-inventory-card),
+  .actual-inventory-card {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .allocation-card {
+    grid-row: 3;
+  }
+
+  .in-stock-card:not(.actual-inventory-card) {
+    grid-row: 1;
+  }
+
+  .actual-inventory-card {
+    grid-row: 2;
   }
 
   .allocation-subgrid {
